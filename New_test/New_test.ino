@@ -6,9 +6,9 @@
 #define TFT_CS   27    // Chip Select
 #define TFT_DC   25    // Data/Command
 #define TFT_RST  26    // Reset
-#define TFT_MOSI 23    // Master Out Slave In
+#define TFT_MOSI 19    // Master Out Slave In
 #define TFT_SCK  18    // Serial Clock
-#define LED_PIN  35    // Backlight control
+#define LED_PIN  33    // Backlight control
 
 // Create an instance of the display
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
