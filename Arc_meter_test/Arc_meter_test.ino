@@ -33,6 +33,17 @@ OpenFontRender ofr;
 #define DARKER_GREY 0x18E3
 
 
+/*
+TFT_MOSI 19
+TFT_SCLK 18
+TFT_CS   27  // Chip select control pin
+TFT_DC   25  // Data Command control pin
+TFT_RST  26  // Reset pin (could connect to RST pin)
+TFT_BL   33            // LED back-light control pin
+TFT_BACKLIGHT_ON HIGH  // Level to turn ON back-light (HIGH or LOW)
+*/
+
+
 bool initMeter = true;  // initialize meter
 int8_t ramp = 1;        // value that determines the rate and direction the meter changes
 int disp_num = 0;    // number thats displayed in the center of the meter
