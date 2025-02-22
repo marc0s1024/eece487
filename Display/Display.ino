@@ -1,16 +1,23 @@
 // Main File
-
-#include UART_Decode.cpp
-#include Display_Functions.cpp
-
-
+#include "Display.h"
 
 void setup() {
-  // put your setup code here, to run once:
+  Serial.begin(115200);
+  tft.begin();
+  
+  DecodeSetup();
+  DisplaySetup();
+  
+
 
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  /*
+  1) check for bms output
+  2) if output recieved -> translate
+  3) send number and code(SOC, current, etc) to show on display
+  repeat
+  */
 
 }
