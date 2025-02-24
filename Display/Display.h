@@ -1,8 +1,8 @@
 #ifndef Display
 #define Display
 
-#define BMS_RX_PIN 16  // ESP32 GPIO16 (RX2) to BMS TX
-#define BMS_TX_PIN 17  // ESP32 GPIO17 (TX2) to BMS RX
+#define BMS_RX_PIN 23  // ESP32 GPIO16 (RX2) to BMS TX
+#define BMS_TX_PIN 22  // ESP32 GPIO17 (TX2) to BMS RX
 
 #include <Arduino.h>
 #include "daly-bms-uart.h"
@@ -13,22 +13,31 @@
 #include <SPI.h>
 #include <TFT_eSPI.h>  // Hardware-specific library
 
+// UART_Decode
 void DecodeSetup();
+void ReadBMS();
+int GetValue(String code);
+
+//Display_Functions
 void DisplaySetup();
-void UpdateDsiplay(string code, int num);
+void UpdateDisplay(String code, int inputVal);
+void DrawGrid(int cols, int rows, uint16_t color);
 
 /*
 ///////// Defined in User_Setup.h for the display library /////////
 #define USER_SETUP_INFO "User_Setup"
 #define ILI9341_DRIVER       // Generic driver for common displays
 
-#define TFT_BL   33            // LED back-light control pin
-#define TFT_BACKLIGHT_ON HIGH  // Level to turn ON back-light (HIGH or LOW)
+
+#define TFT_CS   27  // Chip select control pin
+#define TFT_RST  26  // Reset pin (could connect to RST pin)
+#define TFT_DC   25  // Data Command control pin
 #define TFT_MOSI 19
 #define TFT_SCLK 18
-#define TFT_DC   25  // Data Command control pin
-#define TFT_RST  26  // Reset pin (could connect to RST pin)
-#define TFT_CS   27  // Chip select control pin
+#define TFT_BL   33            // LED back-light control pin
+#define TFT_BACKLIGHT_ON HIGH  // Level to turn ON back-light (HIGH or LOW)
+
+
 
 #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
 #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters

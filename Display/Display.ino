@@ -3,13 +3,10 @@
 
 void setup() {
   Serial.begin(115200);
-  tft.begin();
-  
+    
   DecodeSetup();
   DisplaySetup();
   
-
-
 }
 
 void loop() {
@@ -19,5 +16,10 @@ void loop() {
   3) send number and code(SOC, current, etc) to show on display
   repeat
   */
+  ReadBMS();
+  UpdateDisplay("SOC", GetValue("SOC"));
+
+
+
 
 }

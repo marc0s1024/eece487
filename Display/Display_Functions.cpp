@@ -102,14 +102,16 @@ public:
 Meter Voltage(column1, row1, radius2, "Volts");
 Meter Current(column2, row1, radius2, "Amps");
 Meter SOC(column3, row1, radius2, "SOC");
-Meter Temperature(column3, row1, radius1, "C"); // degree symbol: °C   idk if it works though so test later
+Meter Temperature(column1, row2, radius2, "°C"); // degree symbol: °C   idk if it works though so test later
 
 // test objects
-Meter meter1(column3, row2, radius1, "Percent");
-Meter meter2(column1, row1, radius2, "Volts");
+//Meter meter1(column3, row2, radius1, "Percent");
+//Meter meter2(column1, row1, radius2, "Volts");
 
 void DisplaySetup()
 {
+  tft.begin();
+
   if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
   {
     Serial.println("Render initialize error");
@@ -129,12 +131,15 @@ void DisplaySetup()
   SOC.init();
   Temperature.init();
 
+  //       delete
+  SOC.update(60);
+
   // for aligning
   // Draw a 3x2 grid (3 columns and 2 rows)
   DrawGrid(4, 3, TFT_LIGHTGREY);
 }
 
-void UpdateDsiplay(string code, int inputVal)
+void UpdateDisplay(String code, int inputVal)
 { // maybe change the input to float or something with a decimal
   if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
   {
@@ -145,6 +150,30 @@ void UpdateDsiplay(string code, int inputVal)
   Serial.print("Received:\n");
   Serial.println("Variable code: " + code + "\nValue: " + inputVal + "\n\n");
 
+  Meter *meter = NULL;
+  if (code == "SOC")
+  {
+    meter = &SOC;
+  }
+  else if (code == "Voltage")
+  {
+    meter = &Voltage;
+  }
+  else if (code == "Current")
+  {
+    meter = &Current;
+  }
+  else if (code == "Temperature")
+  {
+    meter = &Temperature;
+  }
+  else
+  {
+    Serial.println("Invalid code: " + code);
+    return;
+  }
+  
+  
   prev_num = disp_num;
   disp_num = inputVal;
 
@@ -155,6 +184,7 @@ void UpdateDsiplay(string code, int inputVal)
   while (prev_num != disp_num)
   {
     prev_num += ramp;
+    meter->update(prev_num);
     // meter1.update(prev_num);
     // meter2.update(prev_num);
     delay(30); // remove if transition should be instantanious

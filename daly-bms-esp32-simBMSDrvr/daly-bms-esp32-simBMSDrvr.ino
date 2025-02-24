@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#define SIM_TX_PIN 17  // TX2 on ESP32 (Connect to RX2 on the receiver ESP32)
-#define SIM_RX_PIN 16  // RX2 (not used for sending)
+#define SIM_TX_PIN 22  // TX2 on ESP32 (Connect to RX2 on the receiver ESP32)
+#define SIM_RX_PIN 23  // RX2 (not used for sending)
 
 HardwareSerial BMS_Simulator(1);  // Use UART1 for transmitting simulated data
 
@@ -14,7 +14,7 @@ void setup() {
 
 void loop() {
     sendFakeBMSPacket();
-    delay(500);  // Send every 5 seconds
+    delay(5000);  // Send every 5 seconds
 }
 
 void sendFakeBMSPacket() {
