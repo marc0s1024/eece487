@@ -14,9 +14,6 @@ TFT_eSprite spr = TFT_eSprite(&tft); // Declare Sprite object "spr" with pointer
 OpenFontRender ofr;
 
 bool initMeter = true; // initialize meter
-int8_t ramp = 1;       // value that determines the rate and direction the meter changes
-int disp_num = 0;      // number thats displayed in the center of the meter
-int prev_num = 0;      // previously displayed number
 
 int radius1 = 60; // temporary test variables
 int radius2 = 30;
@@ -96,6 +93,12 @@ public:
       last_angle = val_angle;
     }
   }
+
+  // Get the value of the meter
+  int getValue()
+  {
+    return last_value;
+  }
 };
 
 // Meter Objects
@@ -139,18 +142,23 @@ void DisplaySetup()
   DrawGrid(4, 3, TFT_LIGHTGREY);
 }
 
-void UpdateDisplay(String code, int inputVal)
-{ // maybe change the input to float or something with a decimal
+void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float or something with a decimal
+{ 
   if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
   {
     Serial.println("Render initialize error");
     return;
   }
 
+  Meter *meter = NULL;
+  int8_t ramp = 1;       // value that determines the rate and direction the meter changes
+  int disp_num = 0;      // number thats displayed in the center of the meter
+  int prev_num = 0;      // previously displayed number
+
+
   Serial.print("Received:\n");
   Serial.println("Variable code: " + code + "\nValue: " + inputVal + "\n\n");
-
-  Meter *meter = NULL;
+  
   if (code == "SOC")
   {
     meter = &SOC;
@@ -170,12 +178,26 @@ void UpdateDisplay(String code, int inputVal)
   else
   {
     Serial.println("Invalid code: " + code);
+    ofr.unloadFont();
     return;
   }
-  
-  
-  prev_num = disp_num;
+
+  // Verify that the pointer is valid
+  if (meter == NULL) {
+    Serial.println("Error: Meter pointer is NULL");
+    ofr.unloadFont();
+    return;
+  }
+
+  prev_num = meter->getValue();
   disp_num = inputVal;
+
+  //debug
+  Serial.print("Starting ramp from ");
+  Serial.print(prev_num);
+  Serial.print(" to ");
+  Serial.println(disp_num);
+
 
   // if the previous number is less than the new number, ramp = 1  (increase meter)
   // condition ? value_if_true : value_if_false;

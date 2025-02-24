@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#define SIM_TX_PIN 22  // TX2 on ESP32 (Connect to RX2 on the receiver ESP32)
-#define SIM_RX_PIN 23  // RX2 (not used for sending)
+#define SIM_TX_PIN 23  // TX2 on ESP32 (Connect to RX2 on the receiver ESP32)
+#define SIM_RX_PIN 22  // RX2 (not used for sending)
 
 HardwareSerial BMS_Simulator(1);  // Use UART1 for transmitting simulated data
 
