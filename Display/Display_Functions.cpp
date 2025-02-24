@@ -51,7 +51,7 @@ public:
     tft.setTextSize(1);
     tft.setTextDatum(MC_DATUM); // Center the text
     tft.drawString(units, x, y + radius / 2);
-    update(disp_num);
+    update(0);
   }
 
   // Update the meter value and display digits
