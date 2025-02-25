@@ -21,7 +21,7 @@ void ReadBMS()
   while (serialRead == 0)
   {
     // update every 5 secs
-    if (millis() - lastUpdateTime >= 5000)
+    if (millis() - lastUpdateTime >= 2000)
     {
       lastUpdateTime = millis(); // reset timer
 
@@ -76,19 +76,19 @@ int GetValue(String code)
 {
   if (code == "SOC")
   {
-    return bms.get.packSOC;
+    return int(bms.get.packSOC);
   }
   else if (code == "Voltage")
   {
-    return bms.get.packVoltage;
+    return int(bms.get.packVoltage);
   }
   else if (code == "Current")
   {
-    return bms.get.packCurrent;
+    return int(bms.get.packCurrent);
   }
   else if (code == "Temperature")
   {
-    return bms.get.tempAverage;
+    return int(bms.get.tempAverage);
   }
   else
   {

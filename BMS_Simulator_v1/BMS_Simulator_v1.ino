@@ -27,19 +27,19 @@
 #include <Arduino.h>
 
 // Choose UART pins for the simulator
-#define SIM_TX_PIN 17  // Simulator TX → host RX
-#define SIM_RX_PIN 16  // (Not used here, but defined for completeness)
+#define SIM_TX_PIN 22  // Simulator TX → host RX
+#define SIM_RX_PIN 23  // (Not used here, but defined for completeness)
 
 HardwareSerial simSerial(2);
 
 // Simulated battery values
-float simVoltage = 57.0;   // Volts
-float simCurrent = 0.0;    // Amps
-float simSoc     = 49.3;   // Percent
+float simVoltage = 33.0;   // Volts
+float simCurrent = 10.0;    // Amps
+float simSoc     = 46.0;   // Percent
 
 // Timing for data updates
 uint32_t lastChange = 0;
-const uint32_t CHANGE_INTERVAL = 10000; // Change values every 10 seconds
+const uint32_t CHANGE_INTERVAL = 2000; // Change values every 10 seconds
 
 // Function to build and send a 0x90 reply packet with the current simulated values.
 void sendReplyPacket() {
@@ -140,14 +140,14 @@ void loop() {
     lastChange = millis();
     
     // For example, increment voltage by 0.5V, increase current by 2A, and SOC by 5%.
-    simVoltage += 0.5f;
+    simVoltage += 1.0f;
     simCurrent += 2.0f;
-    simSoc     += 5.0f;
+    simSoc     += 3.0f;
     
     // Wrap or constrain values to keep them realistic.
-    if (simVoltage > 60.0f)  simVoltage = 55.0f;
+    if (simVoltage > 70.0f)  simVoltage = 30.0f;
     if (simSoc > 100.0f)     simSoc = 40.0f;
-    if (simCurrent > 30.0f)  simCurrent = -5.0f;
+    if (simCurrent > 50.0f)  simCurrent = 15.0f;
     
     Serial.println("Simulated battery values updated.");
   }

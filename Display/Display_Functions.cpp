@@ -105,11 +105,11 @@ public:
 Meter Voltage(column1, row1, radius2, "Volts");
 Meter Current(column2, row1, radius2, "Amps");
 Meter SOC(column3, row1, radius2, "SOC");
-Meter Temperature(column1, row2, radius2, "°C"); // degree symbol: °C   idk if it works though so test later
+Meter Temperature(column1, row2, radius2, "C"); // degree symbol: °C   idk if it works though so test later
 
 // test objects
-//Meter meter1(column3, row2, radius1, "Percent");
-//Meter meter2(column1, row1, radius2, "Volts");
+// Meter meter1(column3, row2, radius1, "Percent");
+// Meter meter2(column1, row1, radius2, "Volts");
 
 void DisplaySetup()
 {
@@ -139,11 +139,11 @@ void DisplaySetup()
 
   // for aligning
   // Draw a 3x2 grid (3 columns and 2 rows)
-  DrawGrid(4, 3, TFT_LIGHTGREY);
+  //DrawGrid(4, 3, TFT_LIGHTGREY);
 }
 
 void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float or something with a decimal
-{ 
+{
   if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
   {
     Serial.println("Render initialize error");
@@ -151,14 +151,13 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
   }
 
   Meter *meter = NULL;
-  int8_t ramp = 1;       // value that determines the rate and direction the meter changes
-  int disp_num = 0;      // number thats displayed in the center of the meter
-  int prev_num = 0;      // previously displayed number
-
+  int8_t ramp = 1;  // value that determines the rate and direction the meter changes
+  int disp_num = 0; // number thats displayed in the center of the meter
+  int prev_num = 0; // previously displayed number
 
   Serial.print("Received:\n");
   Serial.println("Variable code: " + code + "\nValue: " + inputVal + "\n\n");
-  
+
   if (code == "SOC")
   {
     meter = &SOC;
@@ -183,7 +182,8 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
   }
 
   // Verify that the pointer is valid
-  if (meter == NULL) {
+  if (meter == NULL)
+  {
     Serial.println("Error: Meter pointer is NULL");
     ofr.unloadFont();
     return;
@@ -192,12 +192,11 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
   prev_num = meter->getValue();
   disp_num = inputVal;
 
-  //debug
-  Serial.print("Starting ramp from ");
-  Serial.print(prev_num);
-  Serial.print(" to ");
-  Serial.println(disp_num);
-
+  // debug
+  // Serial.print("Starting ramp from ");
+  // Serial.print(prev_num);
+  // Serial.print(" to ");
+  // Serial.println(disp_num);
 
   // if the previous number is less than the new number, ramp = 1  (increase meter)
   // condition ? value_if_true : value_if_false;
