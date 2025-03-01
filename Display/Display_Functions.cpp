@@ -5,7 +5,7 @@
 
 #include "Display.h"
 
-#define LOOP_DELAY 0 // This controls how frequently the meter is updated \
+#define LOOP_DELAY 0 // This controls how frequently the meter is updated
                       // for test purposes this is set to 0
 #define DARKER_GREY 0x18E3
 #define Binghamton_Green 0x02C8
@@ -16,8 +16,10 @@ OpenFontRender ofr;
 
 bool initMeter = true; // initialize meter
 
+
 // each meter is an object so that you can individually control them
-class Meter
+// Circular meter class //
+class Arc_Meter
 {
 private:
   int16_t x, y;        // Position
@@ -28,7 +30,7 @@ private:
 
 public:
   // Constructor
-  Meter(int16_t x, int16_t y, int radius, const char *units)
+  Arc_Meter(int16_t x, int16_t y, int radius, const char *units)
       : x(x), y(y), radius(radius), units(units), last_angle(30), last_value(-1) {}
 
   // Initialize the meter
@@ -93,13 +95,83 @@ public:
     return last_value;
   }
 };
+// End Arc_Meter //
+
+// Rectangular meter class //
+class Rectangle_Meter
+{
+private:
+  int16_t x, y;        // Position of the top left corner
+  int16_t w, h;        // Width and height
+  int thickness;       // Thickness of the rectangle
+  const char *units;   // Label
+  uint16_t last_height;// Last drawn height of the bar
+  int last_value;      // Last displayed value
+  int direction;       // Direction the bar fills: 1 = up, -1 = down, 2 = right, -2 = left
+  int radius = 5;      // Radius of corners
+  int spacing = 2 + thickness;     // Spacing between outer and inner rectangles
+
+public:
+  // Constructor
+  Rectangle_Meter(int16_t x, int16_t y, int16_t w, int16_t h, int thickness, const char *units, int direction)
+      : x(x), y(y), w(w), h(h), thickness(thickness), units(units), last_height(30), last_value(-1), direction(direction) {}
+
+  // Initialize the meter
+  void init()
+  {
+    // outside shell
+    tft.drawSmoothRoundRect(x, y, radius, radius - thickness, w, h, TFT_NAVY, TFT_ORANGE);
+    // inner bar
+    tft.fillSmoothRoundRect(x - spacing, y - spacing, w - 2*spacing, h - 2*spacing, radius, TFT_CYAN, TFT_YELLOW);
+    
+    // Draw the initial units label
+    tft.setTextColor(TFT_GOLD, DARKER_GREY); // Text color with background color
+    tft.setTextSize(1);
+    tft.setTextDatum(MC_DATUM); // Center the text
+    tft.drawString(units, x + w/2, y + h/2);
+    update(0);
+  }
+
+  void update(int val)
+  {
+    int val_angle = map(val, 0, 100, 30, 330);
+    tft.setTextSize(radius * 0.08);
+
+    // Only update if the value changes
+    if (last_value != val)
+    {
+      // // Clear previous digits by overwriting with the background color
+      // tft.setTextColor(DARKER_GREY, DARKER_GREY);
+      // tft.setTextDatum(MC_DATUM);
+      // tft.drawString(String(last_value), x + w/2, y + h/2); // Clear old value
+
+      // clear past values
+      tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2*spacing, h - 2*spacing, radius, DARKER_GREY, DARKER_GREY);
+      // new inner rectangle
+      int newY = y + (h - val);
+      tft.fillSmoothRoundRect(x + spacing, newY + spacing, w - 2*spacing, val - 2*spacing, radius, TFT_CYAN, TFT_YELLOW);
+
+      // Draw the new value
+      tft.setTextColor(TFT_WHITE, DARKER_GREY);
+      tft.drawString(String(val), x + w/2, y + h/2);
+
+      last_value = val;
+    }
+  }
+
+  // Get the value of the meter
+  int getValue()
+  {
+    return last_value;
+  }
+};
+// End Rectangular_Meter //
 
 
-
-// NOTE: height is the long side (320), width(240)
 int radius1 = 60; // temporary test variables
 int radius2 = 30;
 
+// NOTE: height is the long side (320), width(240)
 // 2*3 grid
 int16_t row1 = (tft.width() * 1) / 3; // 240 / 3 = 80
 int16_t row2 = (tft.width() * 2) / 3;
@@ -109,20 +181,22 @@ int16_t column3 = (tft.height() * 3) / 4;
 
 // layout 1
 // columns
-int16_t first_column = tft.height() * 0.2; // wattage
+int16_t first_column = tft.height() * 0.2;   // wattage
 int16_t second_column = tft.height() * 0.75; // voltage, temperature
 int16_t third_column = tft.height() * 0.85;  // current
-int16_t center_width = tft.height() * 0.5; // SOC
+int16_t center_width = tft.height() * 0.5;   // SOC
 // rows
-int16_t first_row = tft.width() * 0.2; // voltage
-int16_t second_row = tft.width() * 0.8; // temperature
+int16_t first_row = tft.width() * 0.2;     // voltage
+int16_t second_row = tft.width() * 0.8;    // temperature
 int16_t center_height = tft.width() * 0.5; // SOC, current
 
 // Meter Objects
-Meter Voltage(second_column, first_row, radius2, "Volts");
-Meter Current(third_column, center_height, radius2, "Amps");
-Meter SOC(center_width, center_height, radius1, "SOC");
-Meter Temperature(second_column, second_row, radius2, "C"); // degree symbol: °C   idk if it works though so test later
+Arc_Meter Voltage(second_column, first_row, radius2, "Volts");
+Arc_Meter Current(third_column, center_height, radius2, "Amps");
+Arc_Meter SOC(center_width, center_height, radius1, "SOC");
+Arc_Meter Temperature(second_column, second_row, radius2, "C"); // degree symbol: °C   idk if it works though so test later
+
+Rectangle_Meter Watts(first_column, first_row, 60, 120, 4, "W", -1);
 
 void DisplaySetup()
 {
@@ -138,16 +212,18 @@ void DisplaySetup()
   tft.setRotation(3);
   tft.fillScreen(Binghamton_Green);
   // tft.setViewport(0, 0, 240, 320);
-  
+
   // initialize meters
   Voltage.init();
   Current.init();
   SOC.init();
   Temperature.init();
+  Watts.init();
+  tft.drawLine(first_column, 0, first_column, tft.height(), 0xFFFF);
 
   // for aligning
   // Draw a 3x2 grid (3 columns and 2 rows)
-  //DrawGrid(4, 3, TFT_LIGHTGREY);
+  // DrawGrid(4, 3, TFT_LIGHTGREY);
 }
 
 void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float or something with a decimal
@@ -158,7 +234,7 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
     return;
   }
 
-  Meter *meter = NULL;
+  Arc_Meter *meter = NULL;
   int8_t ramp = 1;  // value that determines the rate and direction the meter changes
   int disp_num = 0; // number thats displayed in the center of the meter
   int prev_num = 0; // previously displayed number
