@@ -40,6 +40,7 @@ void ReadBMS()
       // SOC & Voltage) you could use other public APIs, like getPackMeasurements(), which only query
       // specific values from the BMS instead of all.
       bms.getPackMeasurements();
+      bms.getPackTemp();
 
       // serial print baud 115200
       Serial.println("Basic BMS Data:              " + (String)bms.get.packVoltage + "V " + (String)bms.get.packCurrent + "I " + (String)bms.get.packSOC + "\% ");

@@ -39,8 +39,8 @@ void loop()
   delay(500);
   Serial.println("Updating Current:\n");
   UpdateDisplay("Current", GetValue("Current"));
-  // Serial.println("Updating Temperature:\n");
-  // UpdateDisplay("Temperature", GetValue("Temperature"));
+  Serial.println("Updating Temperature:\n");
+  UpdateDisplay("Temperature", GetValue("Temperature"));
 
   delay(500);
 }

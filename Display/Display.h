@@ -29,7 +29,7 @@ void DrawGrid(int cols, int rows, uint16_t color);
 #define ILI9341_DRIVER       // Generic driver for common displays
 
 #define TFT_CS   27  // Chip select control pin
-#define TFT_RST  26  // Reset pin (could connect to RST pin)
+#define TFT_RST  26  // Reset pin (could 2connect to RST pin)
 #define TFT_DC   25  // Data Command control pin
 #define TFT_MOSI 19
 #define TFT_SCLK 18
