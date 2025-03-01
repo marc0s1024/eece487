@@ -8,20 +8,13 @@
 #define LOOP_DELAY 0 // This controls how frequently the meter is updated \
                       // for test purposes this is set to 0
 #define DARKER_GREY 0x18E3
+#define Binghamton_Green 0x02C8
 
 TFT_eSPI tft = TFT_eSPI();           // Invoke custom library with default width and height
 TFT_eSprite spr = TFT_eSprite(&tft); // Declare Sprite object "spr" with pointer to "tft" object
 OpenFontRender ofr;
 
 bool initMeter = true; // initialize meter
-
-int radius1 = 60; // temporary test variables
-int radius2 = 30;
-int16_t row1 = (tft.width() * 1) / 3;
-int16_t row2 = (tft.width() * 2) / 3;
-int16_t column1 = (tft.height() * 1) / 4;
-int16_t column2 = (tft.height() * 2) / 4;
-int16_t column3 = (tft.height() * 3) / 4;
 
 // each meter is an object so that you can individually control them
 class Meter
@@ -101,15 +94,35 @@ public:
   }
 };
 
-// Meter Objects
-Meter Voltage(column1, row1, radius2, "Volts");
-Meter Current(column2, row1, radius2, "Amps");
-Meter SOC(column3, row1, radius2, "SOC");
-Meter Temperature(column1, row2, radius2, "C"); // degree symbol: °C   idk if it works though so test later
 
-// test objects
-// Meter meter1(column3, row2, radius1, "Percent");
-// Meter meter2(column1, row1, radius2, "Volts");
+
+// NOTE: height is the long side (320), width(240)
+int radius1 = 60; // temporary test variables
+int radius2 = 30;
+
+// 2*3 grid
+int16_t row1 = (tft.width() * 1) / 3; // 240 / 3 = 80
+int16_t row2 = (tft.width() * 2) / 3;
+int16_t column1 = (tft.height() * 1) / 4; // 320 / 4 = 80
+int16_t column2 = (tft.height() * 2) / 4;
+int16_t column3 = (tft.height() * 3) / 4;
+
+// layout 1
+// columns
+int16_t first_column = tft.height() * 0.2; // wattage
+int16_t second_column = tft.height() * 0.75; // voltage, temperature
+int16_t third_column = tft.height() * 0.85;  // current
+int16_t center_width = tft.height() * 0.5; // SOC
+// rows
+int16_t first_row = tft.width() * 0.2; // voltage
+int16_t second_row = tft.width() * 0.8; // temperature
+int16_t center_height = tft.width() * 0.5; // SOC, current
+
+// Meter Objects
+Meter Voltage(second_column, first_row, radius2, "Volts");
+Meter Current(third_column, center_height, radius2, "Amps");
+Meter SOC(center_width, center_height, radius1, "SOC");
+Meter Temperature(second_column, second_row, radius2, "C"); // degree symbol: °C   idk if it works though so test later
 
 void DisplaySetup()
 {
@@ -123,19 +136,14 @@ void DisplaySetup()
 
   tft.begin();
   tft.setRotation(3);
-  tft.fillScreen(TFT_NAVY);
+  tft.fillScreen(Binghamton_Green);
   // tft.setViewport(0, 0, 240, 320);
-
+  
   // initialize meters
-  // meter1.init();
-  // meter2.init();
   Voltage.init();
   Current.init();
   SOC.init();
   Temperature.init();
-
-  //       delete
-  SOC.update(60);
 
   // for aligning
   // Draw a 3x2 grid (3 columns and 2 rows)
@@ -192,12 +200,6 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
   prev_num = meter->getValue();
   disp_num = inputVal;
 
-  // debug
-  // Serial.print("Starting ramp from ");
-  // Serial.print(prev_num);
-  // Serial.print(" to ");
-  // Serial.println(disp_num);
-
   // if the previous number is less than the new number, ramp = 1  (increase meter)
   // condition ? value_if_true : value_if_false;
   ramp = (prev_num < disp_num) ? 1 : -1;
@@ -206,8 +208,6 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
   {
     prev_num += ramp;
     meter->update(prev_num);
-    // meter1.update(prev_num);
-    // meter2.update(prev_num);
     delay(30); // remove if transition should be instantanious
   }
 

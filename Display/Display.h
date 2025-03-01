@@ -25,15 +25,20 @@ void DrawGrid(int cols, int rows, uint16_t color);
 
 /*
 ///////// Defined in User_Setup.h for the display library /////////
+Must use the file in the arduino library folder. There is a shortcut
+to it in the github. Display will not work unless you put the pins
+where the source User_Setup.h file says they go.
+C:\Arduino\libraries\TFT_eSPI\User_Setup.h
+
 #define USER_SETUP_INFO "User_Setup"
 #define ILI9341_DRIVER       // Generic driver for common displays
 
 #define TFT_CS   27  // Chip select control pin
 #define TFT_RST  26  // Reset pin (could 2connect to RST pin)
 #define TFT_DC   25  // Data Command control pin
-#define TFT_MOSI 19
-#define TFT_SCLK 18
-#define TFT_BL   33            // LED back-light control pin
+#define TFT_MOSI 33
+#define TFT_SCLK 32
+#define TFT_BL   35            // LED back-light control pin
 #define TFT_BACKLIGHT_ON HIGH  // Level to turn ON back-light (HIGH or LOW)
 
 #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
