@@ -40,6 +40,8 @@ void loop()
   UpdateDisplay("Temperature", 42);
   delay(500);
   UpdateDisplay("Watts", 829);
+  delay(3000);
+  UpdateDisplay("Watts", 340);
  
 
 /*

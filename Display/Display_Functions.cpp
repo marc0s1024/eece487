@@ -26,11 +26,14 @@ private:
   const char *units;   // Label
   uint16_t last_angle; // Last drawn angle
   int last_value;      // Last displayed value
+  int max_value = 100;
 
 public:
   // Constructor
   Arc_Meter(int16_t x, int16_t y, int radius, const char *units)
       : x(x), y(y), radius(radius), units(units), last_angle(30), last_value(-1) {}
+  Arc_Meter(int16_t x, int16_t y, int radius, const char *units, int max_value)
+      : x(x), y(y), radius(radius), units(units), last_angle(30), last_value(-1), max_value(max_value) {}
 
   // Initialize the meter
   void init()
@@ -51,8 +54,8 @@ public:
   // Update the meter value and display digits
   void update(int val)
   {
-    int r = radius - 3; // Adjusted radius for drawing arcs
-    int val_angle = map(val, 0, 100, 30, 330);
+    int r = radius - 3;                              // Adjusted radius for drawing arcs
+    int val_angle = map(val, 0, max_value, 30, 330); // Use max_value here
     tft.setTextSize(radius * 0.08);
 
     // Only update if the value changes
@@ -93,6 +96,10 @@ public:
   {
     return last_value;
   }
+  int getMax()
+  {
+    return max_value;
+  }
 };
 // End Arc_Meter //
 
@@ -109,8 +116,11 @@ private:
   int direction;               // Direction the bar fills: 1 = up, -1 = down, 2 = right, -2 = left
   int radius = 15;             // Radius of corners
   int spacing = 2 + thickness; // Spacing between outer and inner rectangles
-  int max_value = 100;
-  int yBottom;
+  int max_value = 100;         // Maximum value of the meter
+  int yBottom;                 // Y coordinate of the bottom of the meter
+  int outline_color = TFT_SILVER;
+  int fill_color = TFT_SKYBLUE;
+  int accent_color = DARKER_GREY;
 
 public:
   // Constructor
@@ -121,9 +131,10 @@ public:
   void init()
   {
     // outside shell
-    tft.drawSmoothRoundRect(x, y, radius, radius - thickness, w, h, TFT_WHITE, Binghamton_Green);
+    tft.drawSmoothRoundRect(x, y, radius, radius - thickness, w, h, outline_color, Binghamton_Green);
     float thin = thickness / 4;
-    tft.drawSmoothRoundRect(x + thin, y + thin, radius, radius-1, w - thin * 2, h - thin * 2, DARKER_GREY, DARKER_GREY);
+    // tft.drawSmoothRoundRect(x + thin, y + thin, radius, radius - 1, w - thin * 2, h - thin * 2, accent_color, accent_color);
+    tft.drawRoundRect(x + thin, y + thin, w - 2 * thin, h - 2 * thin, radius - thin, accent_color);
     // inner bar
     // tft.fillSmoothRoundRect(x + spacing, y + spacing, 1 + w - 2 * spacing, 1 + h - 2 * spacing, radius - thickness, Binghamton_Green, Binghamton_Green);
 
@@ -136,7 +147,7 @@ public:
     if (last_value != val)
     {
       // Clear previous filled area
-      tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2 * spacing, h - 2 * spacing, radius - thickness, Binghamton_Green, Binghamton_Green);
+      tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2 * spacing, h - 2 * spacing, radius - spacing, Binghamton_Green, Binghamton_Green);
 
       // Calculate filled height
       int filledHeight = (val * (h - 2 * spacing)) / max_value;
@@ -145,16 +156,16 @@ public:
       int newY = yBottom - filledHeight;
 
       // Draw the filled rectangle
-      tft.fillSmoothRoundRect(x + spacing, newY, w - 2 * spacing, filledHeight, radius - thickness, TFT_RED, Binghamton_Green);
+      tft.fillSmoothRoundRect(x + spacing, newY, w - 2 * spacing, filledHeight, radius - spacing, fill_color, Binghamton_Green);
 
       // Draw the new value
       tft.setTextSize(2);
       tft.setTextDatum(MC_DATUM);
       // number
-      tft.setTextColor(TFT_WHITE, DARKER_GREY);
+      tft.setTextColor(TFT_WHITE);
       tft.drawString(String(val), x + w / 2, y - 10 + h / 2);
       // units
-      tft.setTextColor(TFT_GOLD, DARKER_GREY);
+      tft.setTextColor(TFT_GOLD);
       tft.drawString(units, x + w / 2, y + 10 + h / 2);
 
       last_value = val;
@@ -165,6 +176,10 @@ public:
   int getValue()
   {
     return last_value;
+  }
+  int getMax()
+  {
+    return max_value;
   }
 };
 // End Rectangular_Meter //
@@ -193,13 +208,13 @@ int16_t center_height = tft.width() * 0.5; // SOC, current
 
 // Meter Objects
 // (x, y, radius, units)
-Arc_Meter Voltage(second_column, first_row, radius2, "Volts");
-Arc_Meter Current(third_column, center_height, radius2, "Amps");
+Arc_Meter Voltage(second_column, first_row, radius2, "Volts", 20);
+Arc_Meter Current(third_column, center_height, radius2, "Amps", 20);
 Arc_Meter SOC(center_width, center_height, radius1, "SOC");
-Arc_Meter Temperature(second_column, second_row, radius2, "C"); // degree symbol: °C   idk if it works though so test later
+Arc_Meter Temperature(second_column, second_row, radius2, "C", 60); // degree symbol: °C   idk if it works though so test later
 
 // (x, y, w, h, thickness, units, direction, max_value)
-Rectangle_Meter Watts(10, tft.width() - 210, 80, 200, 4, "W", -1, 1200);
+Rectangle_Meter Watts(10, tft.width() - 210, 80, 200, 4, "Watts", -1, 1200);
 
 void DisplaySetup()
 {
@@ -243,6 +258,9 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
   int disp_num = 0; // number thats displayed in the center of the meter
   int prev_num = 0; // previously displayed number
   int meter = 0;    // 0 for arc, 1 for rect
+  int max_val = 0;
+  int update_delay = 30;
+  
 
   // Serial.print("Received:\n");
   // Serial.println("Variable code: " + code + "\nValue: " + inputVal + "\n\n");
@@ -295,12 +313,14 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
     // if the previous number is less than the new number, ramp = 1  (increase meter)
     // condition ? value_if_true : value_if_false;
     ramp = (prev_num < disp_num) ? 1 : -1;
+    // max_val = arc_meter->getMax();
+    // update_delay = 3000 / max_val;
 
     while (prev_num != disp_num)
     {
       prev_num += ramp;
       arc_meter->update(prev_num);
-      delay(30); // remove if transition should be instantanious
+      delay(20); // remove if transition should be instantanious
     }
   }
   else if (meter == 1)
@@ -319,12 +339,14 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
     // if the previous number is less than the new number, ramp = 1  (increase meter)
     // condition ? value_if_true : value_if_false;
     ramp = (prev_num < disp_num) ? 1 : -1;
+    max_val = rect_meter->getMax();
+    update_delay = 2000 / max_val;
 
     while (prev_num != disp_num)
     {
-      prev_num += ramp;
+      prev_num += (ramp);
       rect_meter->update(prev_num);
-      delay(30); // remove if transition should be instantanious
+      // delay(1); // remove if transition should be instantanious
     }
   }
   initMeter = true; // i dont think this actually does anything
