@@ -22,7 +22,7 @@ void loop()
   repeat
   */
   Serial.println("Reading BMS:\n");
-  ReadBMS();
+  // ReadBMS(); temporarily dissabled
   
    
   // update with random numbers
@@ -31,13 +31,15 @@ void loop()
   std::uniform_int_distribution<> distrib(1, 100); // Define range for integers 1 to 100
   int randomNumber = distrib(gen);
 
-  UpdateDisplay("SOC", 53);
+  UpdateDisplay("SOC", 75);
   delay(500);
   UpdateDisplay("Voltage", 13);
   delay(500);
   UpdateDisplay("Current", 11);
   delay(500);
-  UpdateDisplay("Temperature", 32);
+  UpdateDisplay("Temperature", 42);
+  delay(500);
+  UpdateDisplay("Watts", 829);
  
 
 /*
@@ -53,5 +55,5 @@ void loop()
   UpdateDisplay("Temperature", GetValue("Temperature"));
 */
 
-  delay(10000);
+  delay(20000);
 }

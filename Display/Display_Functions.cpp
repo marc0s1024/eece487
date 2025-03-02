@@ -5,7 +5,7 @@
 
 #include "Display.h"
 
-#define LOOP_DELAY 0 // This controls how frequently the meter is updated
+#define LOOP_DELAY 0 // This controls how frequently the meter is updated \
                       // for test purposes this is set to 0
 #define DARKER_GREY 0x18E3
 #define Binghamton_Green 0x02C8
@@ -15,7 +15,6 @@ TFT_eSprite spr = TFT_eSprite(&tft); // Declare Sprite object "spr" with pointer
 OpenFontRender ofr;
 
 bool initMeter = true; // initialize meter
-
 
 // each meter is an object so that you can individually control them
 // Circular meter class //
@@ -101,59 +100,62 @@ public:
 class Rectangle_Meter
 {
 private:
-  int16_t x, y;        // Position of the top left corner
-  int16_t w, h;        // Width and height
-  int thickness;       // Thickness of the rectangle
-  const char *units;   // Label
-  uint16_t last_height;// Last drawn height of the bar
-  int last_value;      // Last displayed value
-  int direction;       // Direction the bar fills: 1 = up, -1 = down, 2 = right, -2 = left
-  int radius = 5;      // Radius of corners
-  int spacing = 2 + thickness;     // Spacing between outer and inner rectangles
+  int16_t x, y;                // Position of the top left corner
+  int16_t w, h;                // Width and height
+  int thickness;               // Thickness of the rectangle
+  const char *units;           // Label
+  uint16_t last_height;        // Last drawn height of the bar
+  int last_value;              // Last displayed value
+  int direction;               // Direction the bar fills: 1 = up, -1 = down, 2 = right, -2 = left
+  int radius = 15;             // Radius of corners
+  int spacing = 2 + thickness; // Spacing between outer and inner rectangles
+  int max_value = 100;
+  int yBottom;
 
 public:
   // Constructor
-  Rectangle_Meter(int16_t x, int16_t y, int16_t w, int16_t h, int thickness, const char *units, int direction)
-      : x(x), y(y), w(w), h(h), thickness(thickness), units(units), last_height(30), last_value(-1), direction(direction) {}
+  Rectangle_Meter(int16_t x, int16_t y, int16_t w, int16_t h, int thickness, const char *units, int direction, int max_value)
+      : x(x), y(y), w(w), h(h), thickness(thickness), units(units), last_height(30), last_value(-1), direction(direction), max_value(max_value) {}
 
   // Initialize the meter
   void init()
   {
     // outside shell
-    tft.drawSmoothRoundRect(x, y, radius, radius - thickness, w, h, TFT_NAVY, TFT_ORANGE);
+    tft.drawSmoothRoundRect(x, y, radius, radius - thickness, w, h, TFT_WHITE, Binghamton_Green);
+    float thin = thickness / 4;
+    tft.drawSmoothRoundRect(x + thin, y + thin, radius, radius-1, w - thin * 2, h - thin * 2, DARKER_GREY, DARKER_GREY);
     // inner bar
-    tft.fillSmoothRoundRect(x - spacing, y - spacing, w - 2*spacing, h - 2*spacing, radius, TFT_CYAN, TFT_YELLOW);
-    
-    // Draw the initial units label
-    tft.setTextColor(TFT_GOLD, DARKER_GREY); // Text color with background color
-    tft.setTextSize(1);
-    tft.setTextDatum(MC_DATUM); // Center the text
-    tft.drawString(units, x + w/2, y + h/2);
+    // tft.fillSmoothRoundRect(x + spacing, y + spacing, 1 + w - 2 * spacing, 1 + h - 2 * spacing, radius - thickness, Binghamton_Green, Binghamton_Green);
+
+    yBottom = y + h - spacing;
     update(0);
   }
 
   void update(int val)
   {
-    int val_angle = map(val, 0, 100, 30, 330);
-    tft.setTextSize(radius * 0.08);
-
-    // Only update if the value changes
     if (last_value != val)
     {
-      // // Clear previous digits by overwriting with the background color
-      // tft.setTextColor(DARKER_GREY, DARKER_GREY);
-      // tft.setTextDatum(MC_DATUM);
-      // tft.drawString(String(last_value), x + w/2, y + h/2); // Clear old value
+      // Clear previous filled area
+      tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2 * spacing, h - 2 * spacing, radius - thickness, Binghamton_Green, Binghamton_Green);
 
-      // clear past values
-      tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2*spacing, h - 2*spacing, radius, DARKER_GREY, DARKER_GREY);
-      // new inner rectangle
-      int newY = y + (h - val);
-      tft.fillSmoothRoundRect(x + spacing, newY + spacing, w - 2*spacing, val - 2*spacing, radius, TFT_CYAN, TFT_YELLOW);
+      // Calculate filled height
+      int filledHeight = (val * (h - 2 * spacing)) / max_value;
+
+      // Calculate starting Y coordinate
+      int newY = yBottom - filledHeight;
+
+      // Draw the filled rectangle
+      tft.fillSmoothRoundRect(x + spacing, newY, w - 2 * spacing, filledHeight, radius - thickness, TFT_RED, Binghamton_Green);
 
       // Draw the new value
+      tft.setTextSize(2);
+      tft.setTextDatum(MC_DATUM);
+      // number
       tft.setTextColor(TFT_WHITE, DARKER_GREY);
-      tft.drawString(String(val), x + w/2, y + h/2);
+      tft.drawString(String(val), x + w / 2, y - 10 + h / 2);
+      // units
+      tft.setTextColor(TFT_GOLD, DARKER_GREY);
+      tft.drawString(units, x + w / 2, y + 10 + h / 2);
 
       last_value = val;
     }
@@ -166,7 +168,6 @@ public:
   }
 };
 // End Rectangular_Meter //
-
 
 int radius1 = 60; // temporary test variables
 int radius2 = 30;
@@ -191,12 +192,14 @@ int16_t second_row = tft.width() * 0.8;    // temperature
 int16_t center_height = tft.width() * 0.5; // SOC, current
 
 // Meter Objects
+// (x, y, radius, units)
 Arc_Meter Voltage(second_column, first_row, radius2, "Volts");
 Arc_Meter Current(third_column, center_height, radius2, "Amps");
 Arc_Meter SOC(center_width, center_height, radius1, "SOC");
 Arc_Meter Temperature(second_column, second_row, radius2, "C"); // degree symbol: °C   idk if it works though so test later
 
-Rectangle_Meter Watts(first_column, first_row, 60, 120, 4, "W", -1);
+// (x, y, w, h, thickness, units, direction, max_value)
+Rectangle_Meter Watts(10, tft.width() - 210, 80, 200, 4, "W", -1, 1200);
 
 void DisplaySetup()
 {
@@ -218,8 +221,8 @@ void DisplaySetup()
   Current.init();
   SOC.init();
   Temperature.init();
+  Serial.println("Watts init:");
   Watts.init();
-  tft.drawLine(first_column, 0, first_column, tft.height(), 0xFFFF);
 
   // for aligning
   // Draw a 3x2 grid (3 columns and 2 rows)
@@ -234,29 +237,40 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
     return;
   }
 
-  Arc_Meter *meter = NULL;
+  Arc_Meter *arc_meter = NULL;
+  Rectangle_Meter *rect_meter = NULL;
   int8_t ramp = 1;  // value that determines the rate and direction the meter changes
   int disp_num = 0; // number thats displayed in the center of the meter
   int prev_num = 0; // previously displayed number
+  int meter = 0;    // 0 for arc, 1 for rect
 
-  Serial.print("Received:\n");
-  Serial.println("Variable code: " + code + "\nValue: " + inputVal + "\n\n");
+  // Serial.print("Received:\n");
+  // Serial.println("Variable code: " + code + "\nValue: " + inputVal + "\n\n");
 
   if (code == "SOC")
   {
-    meter = &SOC;
+    arc_meter = &SOC;
+    meter = 0;
   }
   else if (code == "Voltage")
   {
-    meter = &Voltage;
+    arc_meter = &Voltage;
+    meter = 0;
   }
   else if (code == "Current")
   {
-    meter = &Current;
+    arc_meter = &Current;
+    meter = 0;
   }
   else if (code == "Temperature")
   {
-    meter = &Temperature;
+    arc_meter = &Temperature;
+    meter = 0;
+  }
+  else if (code == "Watts")
+  {
+    rect_meter = &Watts;
+    meter = 1;
   }
   else
   {
@@ -265,28 +279,54 @@ void UpdateDisplay(String code, int inputVal) // maybe change inputVal to float 
     return;
   }
 
-  // Verify that the pointer is valid
-  if (meter == NULL)
+  if (meter == 0)
   {
-    Serial.println("Error: Meter pointer is NULL");
-    ofr.unloadFont();
-    return;
+    // Verify that the pointer is valid
+    if (arc_meter == NULL)
+    {
+      Serial.println("Error: Meter pointer is NULL");
+      ofr.unloadFont();
+      return;
+    }
+
+    prev_num = arc_meter->getValue();
+    disp_num = inputVal;
+
+    // if the previous number is less than the new number, ramp = 1  (increase meter)
+    // condition ? value_if_true : value_if_false;
+    ramp = (prev_num < disp_num) ? 1 : -1;
+
+    while (prev_num != disp_num)
+    {
+      prev_num += ramp;
+      arc_meter->update(prev_num);
+      delay(30); // remove if transition should be instantanious
+    }
   }
-
-  prev_num = meter->getValue();
-  disp_num = inputVal;
-
-  // if the previous number is less than the new number, ramp = 1  (increase meter)
-  // condition ? value_if_true : value_if_false;
-  ramp = (prev_num < disp_num) ? 1 : -1;
-
-  while (prev_num != disp_num)
+  else if (meter == 1)
   {
-    prev_num += ramp;
-    meter->update(prev_num);
-    delay(30); // remove if transition should be instantanious
-  }
+    // Verify that the pointer is valid
+    if (rect_meter == NULL)
+    {
+      Serial.println("Error: Meter pointer is NULL");
+      ofr.unloadFont();
+      return;
+    }
 
+    prev_num = rect_meter->getValue();
+    disp_num = inputVal;
+
+    // if the previous number is less than the new number, ramp = 1  (increase meter)
+    // condition ? value_if_true : value_if_false;
+    ramp = (prev_num < disp_num) ? 1 : -1;
+
+    while (prev_num != disp_num)
+    {
+      prev_num += ramp;
+      rect_meter->update(prev_num);
+      delay(30); // remove if transition should be instantanious
+    }
+  }
   initMeter = true; // i dont think this actually does anything
   ofr.unloadFont(); // Recover space used by font metrics etc.
 }
