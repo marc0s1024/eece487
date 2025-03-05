@@ -8,6 +8,7 @@
 #include "daly-bms-uart.h"
 #include "NotoSans_Bold.h"
 #include "OpenFontRender.h"
+#include <algorithm>
 #define TTF_FONT NotoSans_Bold
 
 #include <SPI.h>
@@ -20,7 +21,7 @@ int GetValue(String code);
 
 // Display_Functions
 void DisplaySetup();
-void UpdateDisplay(String code, int inputVal);
+void UpdateDisplay(String code, double inputVal);
 void DrawGrid(int cols, int rows, uint16_t color);
 
 /*

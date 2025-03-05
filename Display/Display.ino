@@ -21,7 +21,7 @@ void loop()
   3) send number and code(SOC, current, etc) to show on display
   repeat
   */
-  Serial.println("Reading BMS:\n");
+  // Serial.println("Reading BMS:\n");
   // ReadBMS(); temporarily dissabled
   
    
@@ -31,18 +31,26 @@ void loop()
   std::uniform_int_distribution<> distrib(1, 100); // Define range for integers 1 to 100
   int randomNumber = distrib(gen);
 
-  UpdateDisplay("SOC", 75);
+  UpdateDisplay("SOC", 100);
   delay(500);
   UpdateDisplay("Voltage", 13);
   delay(500);
-  UpdateDisplay("Current", 11);
+  UpdateDisplay("Current", 11.4);
   delay(500);
   UpdateDisplay("Temperature", 42);
   delay(500);
-  UpdateDisplay("Watts", 829);
-  delay(3000);
+  UpdateDisplay("Watts", 1089.1);
+  delay(2000);
+  
+  UpdateDisplay("SOC", 20.7);
+  delay(500);
+  UpdateDisplay("Voltage", 5.3);
+  delay(500);
+  UpdateDisplay("Current", 3);
+  delay(500);
+  UpdateDisplay("Temperature", 22.5);
+  delay(500);
   UpdateDisplay("Watts", 340);
- 
 
 /*
   Serial.println("Updating SOC:\n");
@@ -57,5 +65,5 @@ void loop()
   UpdateDisplay("Temperature", GetValue("Temperature"));
 */
 
-  delay(20000);
+  delay(2000);
 }
