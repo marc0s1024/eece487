@@ -96,7 +96,7 @@ public:
 
         if (current_angle > last_angle)
         {
-          tft.drawArc(x, y, r, r - thickness, last_angle, current_angle, TFT_SKYBLUE, TFT_BLACK);
+          tft.drawArc(x, y, r, r - thickness, last_angle, current_angle, TFT_GREEN, TFT_BLACK);
         }
         else
         {
@@ -105,7 +105,7 @@ public:
 
         last_angle = current_angle;
 
-        delay(40);
+        //delay(5); //40
       }
     }
     // Final draw of Number, to ensure accuracy.
@@ -115,7 +115,7 @@ public:
 
     tft.setTextColor(TFT_WHITE, DARKER_GREY);
     tft.drawString(String(last_value, 1), x, y);
-    tft.drawArc(x, y, r, r - thickness, 30, val_angle, TFT_SKYBLUE, TFT_BLACK);
+    tft.drawArc(x, y, r, r - thickness, 30, val_angle, TFT_GREEN, TFT_BLACK);
   }
 
   // Get the value of the meter
@@ -146,14 +146,15 @@ private:
   int max_value = 100;         // Maximum value of the meter
   int yBottom;                 // Y coordinate of the bottom of the meter
   int outline_color = TFT_SILVER;
-  int fill_color = TFT_SKYBLUE;
+  int fill_color = TFT_GREEN;
   int accent_color = Binghamton_Green;
   double ramp = 1;
+  int num_decimals = 1;
 
 public:
   // Constructor
-  Rectangle_Meter(int16_t x, int16_t y, int16_t w, int16_t h, int thickness, const char *units, int direction, int max_value)
-      : x(x), y(y), w(w), h(h), thickness(thickness), units(units), last_height(30), last_value(-1), direction(direction), max_value(max_value) {}
+  Rectangle_Meter(int16_t x, int16_t y, int16_t w, int16_t h, int thickness, const char *units, int direction, int max_value, int num_decimals)
+      : x(x), y(y), w(w), h(h), thickness(thickness), units(units), last_height(30), last_value(-1), direction(direction), max_value(max_value), num_decimals(num_decimals) {}
 
   // Initialize the meter
   void init()
@@ -202,13 +203,13 @@ public:
         tft.setTextDatum(MC_DATUM);
         // number
         tft.setTextColor(TFT_WHITE);
-        tft.drawString(String(last_value, 1), x + w / 2, y - 10 + h / 2);
+        tft.drawString(String(last_value, num_decimals), x + w / 2, y - 10 + h / 2);
         // units
         tft.setTextColor(TFT_GOLD);
         tft.drawString(units, x + w / 2, y + 10 + h / 2);
 
         // last_value = val;
-        delay(30);
+        //delay(5); //30
       }
     }
   }
@@ -225,6 +226,9 @@ public:
 };
 // End Rectangular_Meter //
 
+int currentPage = 0; // 0 = main page, 1 = cell page
+const int maxTapDuration = 500; // max duration for a tap in milliseconds
+const int tapMovementThreshold = 10; // max movement for a tap in pixels
 int radius1 = 60; // temporary test variables
 int radius2 = 38;
 
@@ -247,28 +251,29 @@ int16_t first_row = tft.width() * 0.18;     // voltage
 int16_t second_row = tft.width() * 0.82;    // temperature
 int16_t center_height = tft.width() * 0.5; // SOC, current
 
-// Meter Objects
+//--------------------------------------------------------
+// Meter objects for page 1
+// (Voltage, Current, SOC, Temperature, Watts)
+//--------------------------------------------------------
 // (x, y, radius, units)
 Arc_Meter Voltage(second_column, first_row, radius2, "V", 20);
 Arc_Meter Current(third_column, center_height, radius2, "A", 20);
-Arc_Meter SOC(center_width, center_height, radius1, "SOC");
-Arc_Meter Temperature(second_column, second_row, radius2, "C", 60); // degree symbol: °C   idk if it works though so test later
+Arc_Meter SOC(center_width, center_height, radius1, "%");
+Arc_Meter Temperature(second_column, second_row, radius2, "F", 110); // degree symbol: °C   idk if it works though so test later -> it doesnt work - Marcos
 
 // (x, y, w, h, thickness, units, direction, max_value)
-Rectangle_Meter Watts(8, 20, 82, tft.width()-40, 4, "Watts", -1, 1200);
+Rectangle_Meter Watts(8, 20, 82, tft.width()-40, 4, "Watts", -1, 1200, 1);
 
-void DisplaySetup()
-{
-  tft.begin();
+//--------------------------------------------------------
+// Meter objects for page 2
+// (Cell 1, Cell 2, Cell 3, Cell 4 Voltages)
+//--------------------------------------------------------
+Rectangle_Meter Cell1(0, 20, 78, tft.width()-40, 4, "Cell1", -1, 4, 2);
+Rectangle_Meter Cell2(80, 20, 78, tft.width()-40, 4, "Cell2", -1, 4, 2);
+Rectangle_Meter Cell3(160, 20, 78, tft.width()-40, 4, "Cell3", -1, 4, 2);
+Rectangle_Meter Cell4(240, 20, 78, tft.width()-40, 4, "Cell4", -1, 4, 2);
 
-  if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
-  {
-    Serial.println("Render initialize error");
-    return;
-  }
-
-  tft.begin();
-  tft.setRotation(3);
+void DrawMainPage() {
   tft.fillScreen(Binghamton_Green);
   // tft.setViewport(0, 0, 240, 320);
 
@@ -285,6 +290,49 @@ void DisplaySetup()
   // DrawGrid(4, 3, TFT_LIGHTGREY);
 }
 
+void DrawCellPage() {
+  tft.fillScreen(Binghamton_Green);
+
+  // initialize meters
+  Cell1.init();
+  Cell2.init();
+  Cell3.init();
+  Cell4.init();
+}
+
+void DisplaySetup()
+{
+  tft.begin();
+
+  if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
+  {
+    Serial.println("Render initialize error");
+    return;
+  }
+
+  tft.begin();
+  tft.setRotation(3);
+
+  // start with main page (page 1)
+  currentPage = 0;
+  DrawMainPage();
+
+  // tft.fillScreen(Binghamton_Green);
+  // // tft.setViewport(0, 0, 240, 320);
+
+  // // initialize meters
+  // Voltage.init();
+  // Current.init();
+  // SOC.init();
+  // Temperature.init();
+  // Serial.println("Watts init:");
+  // Watts.init();
+
+  // // for aligning
+  // // Draw a 3x2 grid (3 columns and 2 rows)
+  // // DrawGrid(4, 3, TFT_LIGHTGREY);
+}
+
 void UpdateDisplay(String code, double inputVal)
 {
   if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
@@ -293,34 +341,123 @@ void UpdateDisplay(String code, double inputVal)
     return;
   }
 
-  if (code == "SOC")
+  if (currentPage == 0) // check if page 1
   {
-    SOC.update(inputVal);
+    if (code == "SOC")
+    {
+      SOC.update(inputVal);
+    }
+    else if (code == "Voltage")
+    {
+      Voltage.update(inputVal);
+    }
+    else if (code == "Current")
+    {
+      Current.update(inputVal);
+    }
+    else if (code == "Temperature")
+    {
+      Temperature.update(inputVal);
+    }
+    else if (code == "Watts")
+    {
+      Watts.update(inputVal);
+    }
+    else
+    {
+      Serial.println("Invalid code: " + code);
+      ofr.unloadFont();
+      return;
+    }
   }
-  else if (code == "Voltage")
+  else if (currentPage == 1) // check if page 2
   {
-    Voltage.update(inputVal);
-  }
-  else if (code == "Current")
-  {
-    Current.update(inputVal);
-  }
-  else if (code == "Temperature")
-  {
-    Temperature.update(inputVal);
-  }
-  else if (code == "Watts")
-  {
-    Watts.update(inputVal);
+    if (code == "Cell1")
+    {
+      Cell1.update(inputVal);
+    }
+    else if (code == "Cell2")
+    {
+      Cell2.update(inputVal);
+    }
+    else if (code == "Cell3")
+    {
+      Cell3.update(inputVal);
+    }
+    else if (code == "Cell4")
+    {
+      Cell4.update(inputVal);
+    }
+    else
+    {
+      Serial.println("Invalid code: " + code);
+      ofr.unloadFont();
+      return;
+    }
   }
   else
   {
-    Serial.println("Invalid code: " + code);
+    Serial.println("Invalid page: " + String(currentPage));
     ofr.unloadFont();
     return;
   }
 
   ofr.unloadFont(); // Recover space used by font metrics etc.
+}
+
+void SwitchPage() // to be called from Display.ino when a swipe is detected
+{
+  currentPage = (currentPage == 0) ? 1 : 0; // toggle between pages 1 and 2
+  
+  if (currentPage == 0)
+  {
+    DrawMainPage();
+  }
+  else if (currentPage == 1)
+  {
+    DrawCellPage();
+  }
+}
+
+void CheckTap() {
+  static bool touchActive = false;
+  static int startX = 0, startY = 0;
+  static int lastX = 0, lastY = 0;
+  static unsigned long startTime = 0;
+  uint16_t touchX, touchY;
+
+  // check if the screen is currently touched
+  if (tft.getTouch(&touchX, &touchY)) 
+  {
+    if (!touchActive) 
+    {
+      // new touch detected, record start position and time.
+      startX = touchX;
+      startY = touchY;
+      startTime = millis();
+      touchActive = true;
+    }
+    // update last known touch coords
+    lastX = touchX;
+    lastY = touchY;
+  } 
+  else 
+  {
+    // if touch was active and now released, determine if is tap
+    if (touchActive) 
+    {
+      unsigned long touchDuration = millis() - startTime;
+      int deltaX = abs(lastX - startX);
+      int deltaY = abs(lastY - startY);
+      
+      // check if the touch qualifies as a tap
+      if (touchDuration < maxTapDuration && deltaX < tapMovementThreshold && deltaY < tapMovementThreshold) {
+        Serial.println("Tap detected, switching page");
+        SwitchPage();
+      }
+      touchActive = false;
+    }
+  }
 }
 
 void DrawGrid(int cols, int rows, uint16_t color)

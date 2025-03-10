@@ -1,8 +1,8 @@
 #ifndef Display
 #define Display
 
-#define BMS_RX_PIN 23 // ESP32 GPIO16 (RX2) to BMS TX
-#define BMS_TX_PIN 22 // ESP32 GPIO17 (TX2) to BMS RX
+#define BMS_RX_PIN 16 // ESP32 GPIO16 (RX2) to BMS TX
+#define BMS_TX_PIN 17 // ESP32 GPIO17 (TX2) to BMS RX
 
 #include <Arduino.h>
 #include "daly-bms-uart.h"
@@ -17,11 +17,15 @@
 // UART_Decode
 void DecodeSetup();
 void ReadBMS();
-int GetValue(String code);
+double GetValue(String code);
 
 // Display_Functions
+void DrawMainPage();
+void DrawCellPage();
 void DisplaySetup();
 void UpdateDisplay(String code, double inputVal);
+void SwitchPage();
+void CheckTap();
 void DrawGrid(int cols, int rows, uint16_t color);
 
 /*
@@ -35,12 +39,16 @@ C:\Arduino\libraries\TFT_eSPI\User_Setup.h
 #define ILI9341_DRIVER       // Generic driver for common displays
 
 #define TFT_CS   27  // Chip select control pin
-#define TFT_RST  26  // Reset pin (could 2connect to RST pin)
+#define TFT_RST  26  // Reset pin (could connect to RST pin)
 #define TFT_DC   25  // Data Command control pin
 #define TFT_MOSI 33
 #define TFT_SCLK 32
-#define TFT_BL   35            // LED back-light control pin
+#define TFT_BL   14            // LED back-light control pin
+#define TFT_MISO 12
 #define TFT_BACKLIGHT_ON HIGH  // Level to turn ON back-light (HIGH or LOW)
+//#define TFT_RST  -1  // Set TFT_RST to -1 if display RESET is connected to ESP32 board RST
+#define TOUCH_CS 15     // Chip select pin (T_CS) of touch screen
+
 
 #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
 #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters

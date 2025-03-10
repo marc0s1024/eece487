@@ -41,6 +41,7 @@ void ReadBMS()
       // specific values from the BMS instead of all.
       bms.getPackMeasurements();
       bms.getPackTemp();
+      bms.getCellVoltages();
 
       // serial print baud 115200
       Serial.println("Basic BMS Data:              " + (String)bms.get.packVoltage + "V " + (String)bms.get.packCurrent + "I " + (String)bms.get.packSOC + "\% ");
@@ -73,23 +74,48 @@ void ReadBMS()
   serialRead = 0;
 }
 
-int GetValue(String code)
+double GetValue(String code)
 {
+  double fahrenheitTempAvg = 0; // def var for conversion Celsius to Fahrenheit
+  double totalPower = 0; // def var for total power (Watts)
+
   if (code == "SOC")
   {
-    return int(bms.get.packSOC);
+    return double(bms.get.packSOC);
   }
   else if (code == "Voltage")
   {
-    return int(bms.get.packVoltage);
+    return double(bms.get.packVoltage);
   }
   else if (code == "Current")
   {
-    return int(bms.get.packCurrent);
+    return double(bms.get.packCurrent);
   }
   else if (code == "Temperature")
   {
-    return int(bms.get.tempAverage);
+    fahrenheitTempAvg = (double(bms.get.tempAverage) * 1.8) + 32; // C to F conversion
+    return fahrenheitTempAvg;
+  }
+  else if (code == "Watts")
+  {
+    totalPower = double(bms.get.packVoltage) * double(bms.get.packCurrent); // calculate total power (P=VI)
+    return totalPower;
+  }
+  else if (code == "Cell1")
+  {
+    return double(bms.get.cellVmV[0]) / 1000; // cell voltage in V
+  }
+  else if (code == "Cell2")
+  {
+    return double(bms.get.cellVmV[1]) / 1000;
+  }
+  else if (code == "Cell3")
+  {
+    return double(bms.get.cellVmV[2]) / 1000;
+  }
+  else if (code == "Cell4")
+  {
+    return double(bms.get.cellVmV[3]) / 1000;
   }
   else
   {
