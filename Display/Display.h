@@ -1,18 +1,19 @@
 #ifndef Display
 #define Display
 
-#define BMS_RX_PIN 16 // ESP32 GPIO16 (RX2) to BMS TX
-#define BMS_TX_PIN 17 // ESP32 GPIO17 (TX2) to BMS RX
-
 #include <Arduino.h>
 #include "daly-bms-uart.h"
 #include "NotoSans_Bold.h"
 #include "OpenFontRender.h"
 #include <algorithm>
-#define TTF_FONT NotoSans_Bold
 
 #include <SPI.h>
 #include <TFT_eSPI.h> // Hardware-specific library
+
+#define TTF_FONT NotoSans_Bold
+#define BMS_RX_PIN 22  // ESP32 GPIO16 (RX2) to BMS TX
+#define BMS_TX_PIN 23  // ESP32 GPIO17 (TX2) to BMS RX
+extern int8_t current_page; // 0 = main page, 1 = cell page
 
 // UART_Decode
 void DecodeSetup();

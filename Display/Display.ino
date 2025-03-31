@@ -20,20 +20,27 @@ void loop()
   delay(10);
 
   currentTime = millis();
+  // Serial.println(current_page);
   if (currentTime - lastUpdateTime >= updateInterval)
   {
-
-    lastUpdateTime = currentTime;
-
+    Serial.println("Reading BMS");
     ReadBMS();
-    UpdateDisplay("SOC", GetValue("SOC"));
-    UpdateDisplay("Voltage", GetValue("Voltage"));
-    UpdateDisplay("Current", GetValue("Current"));
-    UpdateDisplay("Temperature", GetValue("Temperature"));
-    UpdateDisplay("Watts", GetValue("Watts"));
-    UpdateDisplay("Cell1", GetValue("Cell1"));
-    UpdateDisplay("Cell2", GetValue("Cell2"));
-    UpdateDisplay("Cell3", GetValue("Cell3"));
-    UpdateDisplay("Cell4", GetValue("Cell4"));
+    if (current_page == 0)
+    {
+      UpdateDisplay("SOC", GetValue("SOC"));
+      UpdateDisplay("Voltage", GetValue("Voltage"));
+      UpdateDisplay("Current", GetValue("Current"));
+      UpdateDisplay("Temperature", GetValue("Temperature"));
+      UpdateDisplay("Watts", GetValue("Watts"));
+    }
+    else if (current_page == 1)
+    {
+      UpdateDisplay("Cell1", GetValue("Cell1"));
+      UpdateDisplay("Cell2", GetValue("Cell2"));
+      UpdateDisplay("Cell3", GetValue("Cell3"));
+      UpdateDisplay("Cell4", GetValue("Cell4"));
+    }
+    currentTime = millis();
+    lastUpdateTime = currentTime;
   }
 }

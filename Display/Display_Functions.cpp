@@ -2,6 +2,7 @@
 
 #define DARKER_GREY 0x18E3
 #define Binghamton_Green 0x02C8
+#define medium_green 0x1C07
 
 TFT_eSPI tft = TFT_eSPI();           // Invoke custom library with default width and height
 TFT_eSprite spr = TFT_eSprite(&tft); // Declare Sprite object "spr" with pointer to "tft" object
@@ -20,16 +21,16 @@ private:
   uint16_t max_value = 100;
   uint16_t last_angle;
   int16_t val_angle;
-  int8_t ramp = 1.0;
+  float ramp = 1.0f; // Use float and 'f' for float literal
   int8_t r;
   const char *units; // Label
 
 public:
   // Constructor
   Arc_Meter(int16_t x, int16_t y, int radius, const char *units)
-      : x(x), y(y), radius(radius), units(units), last_angle(30), last_value(-1) {}
+      : x(x), y(y), radius(radius), units(units), last_angle(30), last_value(0) {}
   Arc_Meter(int16_t x, int16_t y, int radius, const char *units, int max_value)
-      : x(x), y(y), radius(radius), units(units), last_angle(30), last_value(-1), max_value(max_value) {}
+      : x(x), y(y), radius(radius), units(units), last_angle(30), last_value(0), max_value(max_value) {}
 
   // Initialize the meter
   void init()
@@ -53,22 +54,21 @@ public:
   // Update the meter value and display digits
   void update(double val)
   {
-    // If the value is negative, change the color to red
+    // Adjust arc color based on value
     if (val < 0)
     {
-      val = abs(val);
       arc_color = TFT_RED;
     }
     else
     {
-      arc_color = TFT_GREEN;
+      arc_color = medium_green;
     }
 
     if (units == "SOC")
     {
       if (val > 60)
       {
-        arc_color = TFT_GREEN;
+        arc_color = medium_green;
       }
       else if (val > 30)
       {
@@ -84,50 +84,65 @@ public:
 
     if (last_value != val)
     {
-      double ramp = std::max(std::abs(val - last_value) / 10.0, 1.0);
+      ramp = std::abs(val - last_value) / 10.0; // Remove max()
       unsigned long startTime = millis();
-      unsigned long animationDuration = 500; // Adjust as needed
+      unsigned long animationDuration = 1000; // Increase duration
 
       while (millis() - startTime < animationDuration)
       {
-        double progress = (millis() - startTime) / (double)animationDuration;
+        float progress = (millis() - startTime) / (float)animationDuration;
         double currentVal = last_value + (val - last_value) * progress;
 
-        // Draw new number
-        tft.setTextColor(TFT_WHITE, DARKER_GREY);
-        tft.drawString(String(last_value, 1), x, y); // Display last_value
-
-        if (r < 25)
+        // Apply ramp based on progress
+        if (val > last_value)
         {
-          thickness = r / 3;
+          currentVal = last_value + ramp * progress * (val - last_value);
+          if (currentVal > val)
+            currentVal = val;
+        }
+        else
+        {
+          currentVal = last_value - ramp * progress * (last_value - val);
+          if (currentVal < val)
+            currentVal = val;
         }
 
-        int current_angle = map(last_value, 0, max_value, 30, 330);
+        int current_angle = map(currentVal, 0, max_value, 30, 330);
 
+        // Redraw only the changed portion of the arc
         if (current_angle > last_angle)
         {
           tft.drawArc(x, y, r, r - thickness, last_angle, current_angle, arc_color, TFT_BLACK);
         }
-        else
+        else if (current_angle < last_angle)
         {
           tft.drawArc(x, y, r, r - thickness, current_angle, last_angle, TFT_BLACK, DARKER_GREY);
         }
 
-        last_angle = current_angle;
+        // Clear previous text
+        int textWidth = tft.textWidth(String(last_value, 1));
+        int textHeight = tft.fontHeight();
+        tft.fillRect(x - textWidth / 2, y - textHeight / 2, textWidth, textHeight, DARKER_GREY);
 
-        // delay(10); // Add a small delay for smoother animation
+        // Draw new text
+        tft.setTextColor(TFT_WHITE, DARKER_GREY);
+        tft.drawString(String(currentVal, 1), x, y);
+
+        last_angle = current_angle;
+        delay(5);
       }
-      last_value = val; // Ensure final value is exact
+      last_value = val;
     }
 
-    // Final draw of Number, to ensure accuracy.
-    tft.setTextColor(DARKER_GREY, DARKER_GREY);
-    tft.setTextDatum(MC_DATUM);
-    tft.drawString(String(last_value, 1), x, y);
+    // Final draw of Number and arc, to ensure accuracy.
+    tft.drawArc(x, y, r, r - thickness, 30, val_angle, arc_color, TFT_BLACK);
+
+    int textWidth = tft.textWidth(String(last_value, 1));
+    int textHeight = tft.fontHeight();
+    tft.fillRect(x - textWidth / 2, y - textHeight / 2, textWidth, textHeight, DARKER_GREY);
 
     tft.setTextColor(TFT_WHITE, DARKER_GREY);
     tft.drawString(String(last_value, 1), x, y);
-    tft.drawArc(x, y, r, r - thickness, 30, val_angle, arc_color, TFT_BLACK);
   }
 
   // Get the value of the meter
@@ -149,11 +164,11 @@ private:
   int16_t x, y; // Position of the top left corner
   int16_t w, h; // Width and height
 
-  int16_t thickness;  // Thickness of the rectangle
-  int8_t radius = 15; // Radius of corners
-  int8_t spacing;     // Spacing between outer and inner rectangles
+  int16_t thickness;              // Thickness of the rectangle
+  int8_t radius = 15;             // Radius of corners
+  int8_t spacing = 2 + thickness; // Spacing between outer and inner rectangles
   uint16_t outline_color = TFT_SILVER;
-  uint16_t fill_color = TFT_GREEN;
+  uint16_t fill_color = medium_green;
   uint16_t accent_color = Binghamton_Green;
 
   double last_value;        // Last displayed value
@@ -162,15 +177,15 @@ private:
   uint16_t last_height;     // Last drawn height of the bar
   uint16_t yBottom;         // Y coordinate of the bottom of the meter
 
-  int8_t direction; // Direction the bar fills: 1 = up, -1 = down, 2 = right, -2 = left
-  int8_t ramp = 1;  // Ramp speed for animation
+  int8_t direction;  // Direction the bar fills: 1 = up, -1 = down, 2 = right, -2 = left
+  float ramp = 1.0f; // Ramp speed for animation (float)
 
   const char *units; // Label
 
 public:
   // Constructor
   Rectangle_Meter(int16_t x, int16_t y, int16_t w, int16_t h, int thickness, const char *units, int direction, int max_value, int num_decimals)
-      : x(x), y(y), w(w), h(h), thickness(thickness), units(units), last_height(30), last_value(-1), direction(direction), max_value(max_value), num_decimals(num_decimals) {}
+      : x(x), y(y), w(w), h(h), thickness(thickness), units(units), last_height(30), last_value(0), direction(direction), max_value(max_value), num_decimals(num_decimals) {}
 
   // Initialize the meter
   void init()
@@ -179,10 +194,7 @@ public:
     tft.fillSmoothRoundRect(x, y, w, h, radius, DARKER_GREY, Binghamton_Green);
     tft.drawSmoothRoundRect(x, y, radius, radius - thickness, w, h, outline_color, Binghamton_Green);
     double thin = thickness / 2;
-    // tft.drawSmoothRoundRect(x + thin, y + thin, radius, radius - 1, w - thin * 2, h - thin * 2, accent_color, accent_color);
     tft.drawRoundRect(x + thin, y + thin, w - 1.5 * thin, h - 1.5 * thin, radius - thin, accent_color);
-    // inner bar
-    // tft.fillSmoothRoundRect(x + spacing, y + spacing, 1 + w - 2 * spacing, 1 + h - 2 * spacing, radius - thickness, Binghamton_Green, Binghamton_Green);
 
     yBottom = y + h - spacing;
     update(0);
@@ -198,45 +210,76 @@ public:
     }
     else
     {
-      fill_color = TFT_GREEN;
+      fill_color = medium_green;
     }
 
     if (last_value != val)
     {
-      double ramp = std::max(std::abs(val - last_value) / 10.0, 1.0);
+      ramp = std::abs(val - last_value) / 10.0;
+      Serial.println(ramp);
       unsigned long startTime = millis();
-      unsigned long animationDuration = 500;
+      unsigned long animationDuration = 500; // Adjust as needed
+
+      double currentVal = last_value;
 
       while (millis() - startTime < animationDuration)
       {
-        double progress = (millis() - startTime) / (double)animationDuration;
-        double currentVal = last_value + (val - last_value) * progress;
+        float progress = (millis() - startTime) / (float)animationDuration;
 
-        // Clear previous filled area
-        tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2 * spacing, h - 2 * spacing, radius - spacing, TFT_BLACK, TFT_BLACK);
-        int16_t filledHeight = (last_value * (h - 2 * spacing)) / max_value;
+        // Calculate currentVal
+        if (val > last_value)
+        {
+          currentVal = last_value + ramp * progress * (val - last_value);
+          if (currentVal > val)
+          {
+            currentVal = val;
+          }
+        }
+        else
+        {
+          currentVal = last_value - ramp * progress * (last_value - val);
+          if (currentVal < val)
+          {
+            currentVal = val;
+          }
+        }
+
+        // Calculate filled height and newY based on currentVal
+        int16_t filledHeight = (currentVal * (h - 2 * spacing)) / max_value;
         int16_t newY = yBottom - filledHeight;
+
+        // Clear the previous filled area
+        tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2 * spacing, h - 2 * spacing, radius - spacing, TFT_BLACK, TFT_BLACK);
+
+        // Draw the new filled area
         tft.fillSmoothRoundRect(x + spacing, newY, w - 2 * spacing, filledHeight, radius - spacing, fill_color, DARKER_GREY);
 
         // Draw the new value
         tft.setTextSize(2);
         tft.setTextDatum(MC_DATUM);
-        // number
         tft.setTextColor(TFT_WHITE);
-        tft.drawString(String(last_value, num_decimals), x + w / 2, y - 10 + h / 2);
+        tft.drawString(String(currentVal, num_decimals), x + w / 2, y - 10 + h / 2);
+
         // units
         tft.setTextColor(TFT_GOLD);
         tft.drawString(units, x + w / 2, y + 10 + h / 2);
 
-        delay(10);
+        delay(100);
       }
-      last_value = val; // Ensure final value is exact
     }
+    last_value = val; // Ensure final value is exact
+    // number
+    tft.setTextSize(2);
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextColor(TFT_WHITE);
+    tft.drawString(String(last_value, num_decimals), x + w / 2, y - 10 + h / 2);
+    // units
+    tft.setTextColor(TFT_GOLD);
+    tft.drawString(units, x + w / 2, y + 10 + h / 2);
   }
 
   // Get the value of the meter
-  double
-  getValue()
+  double getValue()
   {
     return last_value;
   }
@@ -248,7 +291,7 @@ public:
 // End Rectangular_Meter //
 
 // Touchscreen variables
-int8_t currentPage = 0;              // 0 = main page, 1 = cell page
+int8_t current_page = 0;             // 0 = main page, 1 = cell page
 const int maxTapDuration = 500;      // max duration for a tap in milliseconds
 const int tapMovementThreshold = 10; // max movement for a tap in pixels
 
@@ -280,7 +323,7 @@ int16_t center_height = tft.width() * 0.5; // SOC, current
 //--------------------------------------------------------
 // (x, y, radius, units)
 Arc_Meter Voltage(second_column, first_row, radius2, "V", 20);
-Arc_Meter Current(third_column, center_height, radius2, "A", 20);
+Arc_Meter Current(third_column, center_height, radius2, "A", 100);
 Arc_Meter SOC(center_width, center_height, radius1, "%");
 Arc_Meter Temperature(second_column, second_row, radius2, "F", 110); // degree symbol: °C   idk if it works though so test later -> it doesnt work - Marcos
 
@@ -291,10 +334,10 @@ Rectangle_Meter Watts(8, 20, 82, tft.width() - 40, 4, "Watts", -1, 1200, 1);
 // Meter objects for page 2
 // (Cell 1, Cell 2, Cell 3, Cell 4 Voltages)
 //--------------------------------------------------------
-Rectangle_Meter Cell1(0, 20, 78, tft.width() - 40, 4, "Cell1", -1, 4, 2);
-Rectangle_Meter Cell2(80, 20, 78, tft.width() - 40, 4, "Cell2", -1, 4, 2);
-Rectangle_Meter Cell3(160, 20, 78, tft.width() - 40, 4, "Cell3", -1, 4, 2);
-Rectangle_Meter Cell4(240, 20, 78, tft.width() - 40, 4, "Cell4", -1, 4, 2);
+Rectangle_Meter Cell1(4, 20, 72, tft.width() - 40, 4, "Cell1", -1, 4, 2);
+Rectangle_Meter Cell2(84, 20, 72, tft.width() - 40, 4, "Cell2", -1, 4, 2);
+Rectangle_Meter Cell3(164, 20, 72, tft.width() - 40, 4, "Cell3", -1, 4, 2);
+Rectangle_Meter Cell4(244, 20, 72, tft.width() - 40, 4, "Cell4", -1, 4, 2);
 
 void DrawMainPage()
 {
@@ -306,7 +349,6 @@ void DrawMainPage()
   Current.init();
   SOC.init();
   Temperature.init();
-  Serial.println("Watts init:");
   Watts.init();
 }
 
@@ -335,7 +377,7 @@ void DisplaySetup()
   tft.setRotation(3);
 
   // start with main page (page 1)
-  currentPage = 0;
+  current_page = 0;
   DrawMainPage();
 
   // for aligning
@@ -351,7 +393,7 @@ void UpdateDisplay(String code, double inputVal)
     return;
   }
 
-  if (currentPage == 0) // check if page 1
+  if (current_page == 0) // check if page 1
   {
     if (code == "SOC")
     {
@@ -380,7 +422,7 @@ void UpdateDisplay(String code, double inputVal)
       return;
     }
   }
-  else if (currentPage == 1) // check if page 2
+  else if (current_page == 1) // check if page 2
   {
     if (code == "Cell1")
     {
@@ -407,7 +449,7 @@ void UpdateDisplay(String code, double inputVal)
   }
   else
   {
-    Serial.println("Invalid page: " + String(currentPage));
+    Serial.println("Invalid page: " + String(current_page));
     ofr.unloadFont();
     return;
   }
@@ -417,13 +459,13 @@ void UpdateDisplay(String code, double inputVal)
 
 void SwitchPage() // to be called from Display.ino when a swipe is detected
 {
-  currentPage = (currentPage == 0) ? 1 : 0; // toggle between pages 1 and 2
+  current_page = (current_page == 0) ? 1 : 0; // toggle between pages 1 and 2
 
-  if (currentPage == 0)
+  if (current_page == 0)
   {
     DrawMainPage();
   }
-  else if (currentPage == 1)
+  else if (current_page == 1)
   {
     DrawCellPage();
   }

@@ -33,13 +33,13 @@
 HardwareSerial simSerial(2);
 
 // Simulated battery values
-float simVoltage = 33.0;   // Volts
+float simVoltage = 3.0;   // Volts
 float simCurrent = 10.0;    // Amps
 float simSoc     = 46.0;   // Percent
 
 // Timing for data updates
 uint32_t lastChange = 0;
-const uint32_t CHANGE_INTERVAL = 2000; // Change values every 10 seconds
+const uint32_t CHANGE_INTERVAL = 10000; // Change values every 10 seconds
 
 // Function to build and send a 0x90 reply packet with the current simulated values.
 void sendReplyPacket() {
@@ -140,14 +140,14 @@ void loop() {
     lastChange = millis();
     
     // For example, increment voltage by 0.5V, increase current by 2A, and SOC by 5%.
-    simVoltage += 1.0f;
-    simCurrent += 2.0f;
-    simSoc     += 3.0f;
+    simVoltage += 1.2f;
+    simCurrent += 30.0f;
+    simSoc     += 20.0f;
     
     // Wrap or constrain values to keep them realistic.
-    if (simVoltage > 70.0f)  simVoltage = 30.0f;
-    if (simSoc > 100.0f)     simSoc = 40.0f;
-    if (simCurrent > 50.0f)  simCurrent = 15.0f;
+    if (simVoltage > 13.0f)  simVoltage = 3.0f;
+    if (simSoc > 100.0f)     simSoc = 10.0f;
+    if (simCurrent > 100.0f)  simCurrent = 15.0f;
     
     Serial.println("Simulated battery values updated.");
   }

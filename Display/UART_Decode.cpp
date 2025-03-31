@@ -18,7 +18,7 @@ void ReadBMS()
   // Right now there's a bug where if you send more than one character it will read multiple times
   Serial.read(); // Discard the character sent
   Serial.read(); // Discard the new line
-
+ 
   /* this could fix ^
   // Read the incoming message
   String incomingMessage = Serial.readStringUntil('\n');
