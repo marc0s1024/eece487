@@ -38,11 +38,24 @@ double GetValue(String code) {
   double totalPower = 0;         // def var for total power (Watts)
 
   if (code == "SOC") {
-    return double(bms.get.packSOC);
+    if (bms.get.packSOC > 100) {
+      return 100;
+    }
+    else if (bms.get.packSOC < 0) {
+      return 0;
+    }
+    else {
+      return double(bms.get.packSOC);
+    }
   } else if (code == "Voltage") {
     return double(bms.get.packVoltage);
   } else if (code == "Current") {
-    return double(bms.get.packCurrent);
+    if (bms.get.packCurrent < -1000) {
+      return Current.getValue();
+    }
+    else {
+      return double(bms.get.packCurrent);
+    }
   } else if (code == "Temperature") {
     // Sometimes the BMS will return -40, so only update when not -40
     if (((double(bms.get.tempAverage) * 1.8) + 32) > -40) {
