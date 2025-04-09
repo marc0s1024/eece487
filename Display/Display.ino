@@ -1,57 +1,41 @@
 // Main File
+#include <iostream>
+
 #include "Display.h"
 
-//delete
-#include <iostream>
-#include <random>
+unsigned long lastUpdateTime = 0;
+const unsigned long updateInterval = 5000;
+unsigned long currentTime;
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
-
   DecodeSetup();
   DisplaySetup();
+  lastUpdateTime = millis();
 }
 
-void loop()
-{
-  /*
-  1) check for bms output
-  2) if output recieved -> translate
-  3) send number and code(SOC, current, etc) to show on display
-  repeat
-  */
-  Serial.println("Reading BMS:\n");
-  ReadBMS();
-  
-   
-  // update with random numbers
-  std::random_device rd;  // Obtain a random seed from the OS
-  std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
-  std::uniform_int_distribution<> distrib(1, 100); // Define range for integers 1 to 100
-  int randomNumber = distrib(gen);
+void loop() {
+  CheckTap();
+  delay(10);
 
-  UpdateDisplay("SOC", 53);
-  delay(500);
-  UpdateDisplay("Voltage", 13);
-  delay(500);
-  UpdateDisplay("Current", 11);
-  delay(500);
-  UpdateDisplay("Temperature", 32);
- 
-
-/*
-  Serial.println("Updating SOC:\n");
-  UpdateDisplay("SOC", GetValue("SOC"));
-  delay(500);
-  Serial.println("Updating Voltage:\n");
-  UpdateDisplay("Voltage", GetValue("Voltage"));
-  delay(500);
-  Serial.println("Updating Current:\n");
-  UpdateDisplay("Current", GetValue("Current"));
-  Serial.println("Updating Temperature:\n");
-  UpdateDisplay("Temperature", GetValue("Temperature"));
-*/
-
-  delay(10000);
+  currentTime = millis();
+  // Serial.println(current_page);
+  if (currentTime - lastUpdateTime >= updateInterval) {
+    Serial.println("Reading BMS");
+    ReadBMS();
+    if (current_page == 0) {
+      UpdateDisplay("SOC", GetValue("SOC"));
+      UpdateDisplay("Voltage", GetValue("Voltage"));
+      UpdateDisplay("Current", GetValue("Current"));
+      UpdateDisplay("Temperature", GetValue("Temperature"));
+      UpdateDisplay("Watts", GetValue("Watts"));
+    } else if (current_page == 1) {
+      UpdateDisplay("Cell1", GetValue("Cell1"));
+      UpdateDisplay("Cell2", GetValue("Cell2"));
+      UpdateDisplay("Cell3", GetValue("Cell3"));
+      UpdateDisplay("Cell4", GetValue("Cell4"));
+    }
+    currentTime = millis();
+    lastUpdateTime = currentTime;
+  }
 }
