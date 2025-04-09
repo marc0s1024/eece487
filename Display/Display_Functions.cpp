@@ -65,6 +65,7 @@ class Arc_Meter {
   void update(double val) {
     // Adjust arc color based on value
     if (val < 0) {
+      val = abs(val);
       arc_color = TFT_RED;
     } else {
       arc_color = medium_green;
@@ -168,6 +169,8 @@ class Rectangle_Meter {
   int8_t num_decimals = 1;   // Number of decimals to display
   uint16_t last_height;      // Last drawn height of the bar
   uint16_t yBottom;          // Y coordinate of the bottom of the meter
+  int16_t filledHeight = 0;
+  int16_t newY = 0;
 
   int8_t direction;   // Direction the bar fills: 1 = up, -1 = down, 2 = right,
                       // -2 = left
@@ -239,8 +242,8 @@ class Rectangle_Meter {
         }
 
         // Calculate filled height and newY based on current_value
-        int16_t filledHeight = (current_value * (h - 2 * spacing)) / max_value;
-        int16_t newY = yBottom - filledHeight;
+        filledHeight = (current_value * (h - 2 * spacing)) / max_value;
+        newY = yBottom - filledHeight;
 
         // Clear the previous filled area
         tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2 * spacing,
@@ -265,6 +268,14 @@ class Rectangle_Meter {
       }
     }
     last_value = val;
+    // Clear the previous filled area
+    tft.fillSmoothRoundRect(x + spacing, y + spacing, w - 2 * spacing,
+                            h - 2 * spacing, radius - spacing, TFT_BLACK,
+                            TFT_BLACK);
+    // Draw the new filled area
+    tft.fillSmoothRoundRect(x + spacing, newY, w - 2 * spacing,
+                            filledHeight, radius - spacing, fill_color,
+                            DARKER_GREY);
     // number
     tft.setTextSize(2);
     tft.setTextDatum(MC_DATUM);
@@ -363,7 +374,7 @@ void DisplaySetup() {
   }
 
   tft.begin();
-  tft.setRotation(3);
+  tft.setRotation(1);
 
   // start with main page (page 1)
   current_page = 0;
