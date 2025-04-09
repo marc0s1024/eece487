@@ -12,8 +12,8 @@
 #include "daly-bms-uart.h"
 
 #define TTF_FONT NotoSans_Bold
-#define BMS_RX_PIN 22        // ESP32 GPIO16 (RX2) to BMS TX
-#define BMS_TX_PIN 23        // ESP32 GPIO17 (TX2) to BMS RX
+#define BMS_RX_PIN 2        // ESP32 GPIO2 to BMS TX
+#define BMS_TX_PIN 4        // ESP32 GPIO4 to BMS RX
 extern int8_t current_page;  // 0 = main page, 1 = cell page
 
 // UART_Decode

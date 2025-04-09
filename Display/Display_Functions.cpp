@@ -363,7 +363,7 @@ void DisplaySetup() {
   }
 
   tft.begin();
-  tft.setRotation(3);
+  tft.setRotation(1);
 
   // start with main page (page 1)
   current_page = 0;
