@@ -33,7 +33,7 @@ double GetValue(String code);
 void DrawMainPage();
 void DrawCellPage();
 void DisplaySetup();
-void UpdateDisplay(String code, double inputVal);
+void UpdateDisplay();
 void SwitchPage();
 void CheckTap();
 void DrawGrid(int cols, int rows, uint16_t color);
@@ -45,8 +45,8 @@ class Arc_Meter {
   Arc_Meter(int16_t x, int16_t y, int radius, const char *units, int max_value);
   void init();
   void update(double inputVal);
-  double getValue() { return last_value; };
-  int getMax() { return max_value; };
+  double meterValue();
+  int getMax();
 
  private:
   int16_t x, y;     // Position
@@ -71,7 +71,7 @@ class Rectangle_Meter {
                   int num_decimals);
   void init();
   void update(double inputVal);
-  double getValue() { return last_value; }
+  double meterValue() { return last_value; }
   int getMax() { return max_value; };
 
  private:
@@ -97,12 +97,13 @@ class Rectangle_Meter {
   const char *units;  // Label
 };
 
+// Page 1
 extern Arc_Meter Voltage;
 extern Arc_Meter Current;
 extern Arc_Meter SOC;
 extern Arc_Meter Temperature;
 extern Rectangle_Meter Watts;
-
+// Page 2
 extern Rectangle_Meter Cell1;
 extern Rectangle_Meter Cell2;
 extern Rectangle_Meter Cell3;

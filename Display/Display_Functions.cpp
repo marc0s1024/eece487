@@ -139,6 +139,11 @@ void Arc_Meter::update(double val) {
   tft.drawString(String(last_value, 1), x, y);
 }
 
+// Get the previous value
+double Arc_Meter::meterValue() { return last_value; };
+// Get the max value
+int Arc_Meter::getMax() { return max_value; };
+
 // ---------- End Arc_Meter ---------- //
 
 //------------------------------------------------
@@ -250,8 +255,12 @@ void Rectangle_Meter::update(double val) {
   tft.drawString(units, x + w / 2, y + 10 + h / 2);
 }
 
-// ---------- End Rectangular_Meter ---------- //
+// Get the previous value
+double Rectangle_Meter::meterValue() { return last_value; };
+// Get the max value
+int Rectangle_Meter::getMax() { return max_value; };
 
+// ---------- End Rectangular_Meter ---------- //
 
 // Touchscreen variables
 int8_t current_page = 0;              // 0 = main page, 1 = cell page
@@ -348,48 +357,52 @@ void DisplaySetup() {
   // DrawGrid(4, 3, TFT_LIGHTGREY);
 }
 
-void UpdateDisplay(String code, double inputVal) {
+void UpdateDisplay() {
   if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT))) {
     Serial.println("Render initialize error");
     return;
   }
+  double temp = 0;
 
-  if (current_page == 0)  // check if page 1
-  {
-    if (code == "SOC") {
-      SOC.update(inputVal);
-    } else if (code == "Voltage") {
-      Voltage.update(inputVal);
-    } else if (code == "Current") {
-      Current.update(inputVal);
-    } else if (code == "Temperature") {
-      Temperature.update(inputVal);
-    } else if (code == "Watts") {
-      Watts.update(inputVal);
-    } else {
-      Serial.println("Invalid code: " + code);
-      ofr.unloadFont();
-      return;
+  if (current_page == 0) {
+    temp = GetValue("SOC");
+    if (abs(SOC.meterValue() - temp) > 0.5) {
+      SOC.update(temp);
     }
-  } else if (current_page == 1)  // check if page 2
-  {
-    if (code == "Cell1") {
-      Cell1.update(inputVal);
-    } else if (code == "Cell2") {
-      Cell2.update(inputVal);
-    } else if (code == "Cell3") {
-      Cell3.update(inputVal);
-    } else if (code == "Cell4") {
-      Cell4.update(inputVal);
-    } else {
-      Serial.println("Invalid code: " + code);
-      ofr.unloadFont();
-      return;
+    temp = GetValue("Voltage");
+    if (abs(Voltage.meterValue() - temp) > 0.5) {
+      Voltage.update(temp);      
     }
-  } else {
-    Serial.println("Invalid page: " + String(current_page));
-    ofr.unloadFont();
-    return;
+    temp = GetValue("Current");
+    if (abs(Current.meterValue() - temp) > 0.5) {
+      Current.update(temp);      
+    }
+    temp = GetValue("Temperature");
+    if (abs(Temperature.meterValue() - temp) > 0.5) {
+      Temperature.update(temp);      
+    }
+    temp = GetValue("Watts");
+    if (abs(Watts.meterValue() - temp) > 0.5) {
+      Watts.update(temp);      
+    }
+  }
+  else if (current_page == 1) {
+    temp = GetValue("Cell1");
+    if (abs(Cell1.meterValue() - temp) > 0.5) {
+      Cell1.update(temp);      
+    }
+    temp = GetValue("Cell2");
+    if (abs(Cell2.meterValue() - temp) > 0.5) {
+      Cell2.update(temp);      
+    }
+    temp = GetValue("Cell3");
+    if (abs(Cell3.meterValue() - temp) > 0.5) {
+      Cell3.update(temp);      
+    }
+    temp = GetValue("Cell4");
+    if (abs(Cell4.meterValue() - temp) > 0.5) {
+      Cell4.update(temp);      
+    }
   }
 
   ofr.unloadFont();  // Recover space used by font metrics etc.

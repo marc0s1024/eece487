@@ -51,7 +51,7 @@ double GetValue(String code) {
     return double(bms.get.packVoltage);
   } else if (code == "Current") {
     if (bms.get.packCurrent < -1000) {
-      return Current.getValue();
+      return Current.meterValue();
     }
     else {
       return double(bms.get.packCurrent);

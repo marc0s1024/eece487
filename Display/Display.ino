@@ -22,19 +22,10 @@ void loop() {
   // Serial.println(current_page);
   if (currentTime - lastUpdateTime >= updateInterval) {
     Serial.println("Reading BMS");
+    // Gets necesary data from the BMS
     ReadBMS();
-    if (current_page == 0) {
-      UpdateDisplay("SOC", GetValue("SOC"));
-      UpdateDisplay("Voltage", GetValue("Voltage"));
-      UpdateDisplay("Current", GetValue("Current"));
-      UpdateDisplay("Temperature", GetValue("Temperature"));
-      UpdateDisplay("Watts", GetValue("Watts"));
-    } else if (current_page == 1) {
-      UpdateDisplay("Cell1", GetValue("Cell1"));
-      UpdateDisplay("Cell2", GetValue("Cell2"));
-      UpdateDisplay("Cell3", GetValue("Cell3"));
-      UpdateDisplay("Cell4", GetValue("Cell4"));
-    }
+    // Updates the display with new BMS data
+    UpdateDisplay();
     currentTime = millis();
     lastUpdateTime = currentTime;
   }
