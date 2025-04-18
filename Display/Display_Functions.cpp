@@ -1,9 +1,9 @@
 #include "Display.h"
 
 TFT_eSPI tft =
-    TFT_eSPI();  // Invoke custom library with default width and height
+    TFT_eSPI(); // Invoke custom library with default width and height
 TFT_eSprite spr = TFT_eSprite(
-    &tft);  // Declare Sprite object "spr" with pointer to "tft" object
+    &tft); // Declare Sprite object "spr" with pointer to "tft" object
 OpenFontRender ofr;
 
 //------------------------------------------------
@@ -21,7 +21,8 @@ Arc_Meter::Arc_Meter(int16_t x, int16_t y, int radius, const char *units)
       current_value(0),
       max_value(100),
       last_angle(30),
-      ramp(1.0f) {
+      ramp(1.0f)
+{
   // Empty constructor body (initialization done in initializer list)
 }
 
@@ -37,12 +38,14 @@ Arc_Meter::Arc_Meter(int16_t x, int16_t y, int radius, const char *units,
       last_value(0),
       current_value(0),
       last_angle(30),
-      ramp(1.0f) {
+      ramp(1.0f)
+{
   // Empty constructor body
 }
 
 // init() method implementation
-void Arc_Meter::init() {
+void Arc_Meter::init()
+{
   tft.fillCircle(x, y, radius, DARKER_GREY);
   tft.drawSmoothCircle(x, y, radius, TFT_SILVER, DARKER_GREY);
   uint16_t tmp = radius - 3;
@@ -62,22 +65,32 @@ void Arc_Meter::init() {
 }
 
 // update() method implementation
-void Arc_Meter::update(double val) {
+void Arc_Meter::update(double val)
+{
   // Adjust color if value is negative
-  if (val < 0) {
+  if (val < 0)
+  {
     val = abs(val);
     arc_color = TFT_RED;
-  } else {
+  }
+  else
+  {
     arc_color = medium_green;
   }
 
   // Special handling for "SOC" meter
-  if (strcmp(units, "SOC") == 0) {
-    if (val > 60) {
+  if (strcmp(units, "SOC") == 0)
+  {
+    if (val > 60)
+    {
       arc_color = medium_green;
-    } else if (val > 30) {
+    }
+    else if (val > 30 && val <= 60)
+    {
       arc_color = TFT_YELLOW;
-    } else {
+    }
+    else
+    {
       arc_color = TFT_RED;
     }
   }
@@ -86,31 +99,37 @@ void Arc_Meter::update(double val) {
   val_angle = map(val, 0, max_value, 30, 330);
 
   // Animate if the value has changed
-  if (last_value != val) {
-    ramp = std::abs(val - last_value) / 10.0;
+  if (last_value != val)
+  {
+    // Calculate ramp as a fixed percentage of max_value instead of based on difference
+    ramp = max_value * 0.05; // 5% of max value per animation step
     unsigned long startTime = millis();
-    unsigned long animationDuration = 1000;  // Duration in milliseconds
+    unsigned long animationDuration = 1000; // Duration in milliseconds
 
-    while (millis() - startTime < animationDuration) {
+    while (millis() - startTime < animationDuration)
+    {
       float progress = (millis() - startTime) / (float)animationDuration;
-      current_value = last_value + (val - last_value) * progress;
 
-      // Use ramping effect to smooth the change
-      if (val > last_value) {
-        current_value = last_value + ramp * progress * (val - last_value);
-        if (current_value > val) current_value = val;
-      } else {
-        current_value = last_value - ramp * progress * (last_value - val);
-        if (current_value < val) current_value = val;
+      // Use simple linear interpolation for smooth animation
+      current_value = last_value + progress * (val - last_value);
+
+      // Ensure we don't overshoot
+      if ((val > last_value && current_value > val) ||
+          (val < last_value && current_value < val))
+      {
+        current_value = val;
       }
 
       int current_angle = map(current_value, 0, max_value, 30, 330);
 
       // Redraw only the arc segment that changed
-      if (current_angle > last_angle) {
+      if (current_angle > last_angle)
+      {
         tft.drawArc(x, y, r, r - thickness, last_angle, current_angle,
                     arc_color, TFT_BLACK);
-      } else if (current_angle < last_angle) {
+      }
+      else if (current_angle < last_angle)
+      {
         tft.drawArc(x, y, r, r - thickness, current_angle, last_angle,
                     TFT_BLACK, DARKER_GREY);
       }
@@ -130,19 +149,21 @@ void Arc_Meter::update(double val) {
   }
 
   // Final redraw to ensure accuracy
-  tft.drawArc(x, y, r, r - thickness, 30, val_angle, arc_color, TFT_BLACK);
-  int textWidth = tft.textWidth(String(last_value, 1));
+  int textWidth = tft.textWidth(String(max_value, 1));
   int textHeight = tft.fontHeight();
   tft.fillRect(x - textWidth / 2, y - textHeight / 2, textWidth, textHeight,
                DARKER_GREY);
   tft.setTextColor(TFT_WHITE, DARKER_GREY);
   tft.drawString(String(last_value, 1), x, y);
+  tft.drawArc(x, y, r, r - thickness, 30, 330,
+              TFT_BLACK, DARKER_GREY);
+  tft.drawArc(x, y, r, r - thickness, 30, val_angle, arc_color, TFT_BLACK);
 }
 
 // Get the previous value
-double Arc_Meter::meterValue() { return last_value; };
+double Arc_Meter::meterValue() { return last_value; }
 // Get the max value
-int Arc_Meter::getMax() { return max_value; };
+int Arc_Meter::getMax() { return int(max_value); }
 
 // ---------- End Arc_Meter ---------- //
 
@@ -166,7 +187,8 @@ Rectangle_Meter::Rectangle_Meter(int16_t x, int16_t y, int16_t w, int16_t h,
       num_decimals(num_decimals) {}
 
 // Initialize the meter
-void Rectangle_Meter::init() {
+void Rectangle_Meter::init()
+{
   // outside shell
   tft.fillSmoothRoundRect(x, y, w, h, radius, DARKER_GREY, Binghamton_Green);
   tft.drawSmoothRoundRect(x, y, radius, radius - thickness, w, h, outline_color,
@@ -179,37 +201,40 @@ void Rectangle_Meter::init() {
   update(last_value);
 }
 
-void Rectangle_Meter::update(double val) {
+void Rectangle_Meter::update(double val)
+{
   // If the value is negative, change the color to red
-  if (val < 0) {
+  if (val < 0)
+  {
     val = abs(val);
     fill_color = TFT_RED;
-  } else {
+  }
+  else
+  {
     fill_color = medium_green;
   }
 
-  if (last_value != val) {
-    ramp = std::abs(val - last_value) / 10.0;
-    Serial.println(ramp);
+  if (last_value != val)
+  {
+    // Calculate ramp as a fixed percentage of max_value instead of based on difference
+    ramp = max_value * 0.05; // 5% of max value per animation step
     unsigned long startTime = millis();
-    unsigned long animationDuration = 500;  // Adjust as needed
+    unsigned long animationDuration = 500; // Adjust as needed
 
     current_value = last_value;
 
-    while (millis() - startTime < animationDuration) {
+    while (millis() - startTime < animationDuration)
+    {
       float progress = (millis() - startTime) / (float)animationDuration;
 
-      // Calculate current_value
-      if (val > last_value) {
-        current_value = last_value + ramp * progress * (val - last_value);
-        if (current_value > val) {
-          current_value = val;
-        }
-      } else {
-        current_value = last_value - ramp * progress * (last_value - val);
-        if (current_value < val) {
-          current_value = val;
-        }
+      // Use simple linear interpolation for smooth animation
+      current_value = last_value + progress * (val - last_value);
+
+      // Ensure we don't overshoot
+      if ((val > last_value && current_value > val) ||
+          (val < last_value && current_value < val))
+      {
+        current_value = val;
       }
 
       // Calculate filled height and newY based on current_value
@@ -256,35 +281,22 @@ void Rectangle_Meter::update(double val) {
 }
 
 // Get the previous value
-double Rectangle_Meter::meterValue() { return last_value; };
+double Rectangle_Meter::meterValue() { return last_value; }
 // Get the max value
-int Rectangle_Meter::getMax() { return max_value; };
+int Rectangle_Meter::getMax() { return int(max_value); }
 
 // ---------- End Rectangular_Meter ---------- //
 
-// Touchscreen variables
-int8_t current_page = 0;              // 0 = main page, 1 = cell page
-const int maxTapDuration = 500;       // max duration for a tap in milliseconds
-const int tapMovementThreshold = 10;  // max movement for a tap in pixels
-
-// NOTE: height is the long side (320), width(240)
-// 2*3 grid
-int16_t row1 = (tft.width() * 1) / 3;  // 240 / 3 = 80
-int16_t row2 = (tft.width() * 2) / 3;
-int16_t column1 = (tft.height() * 1) / 4;  // 320 / 4 = 80
-int16_t column2 = (tft.height() * 2) / 4;
-int16_t column3 = (tft.height() * 3) / 4;
-
 // layout 1
 // columns
-int16_t first_column = tft.height() * 0.2;    // wattage
-int16_t second_column = tft.height() * 0.74;  // voltage, temperature
-int16_t third_column = tft.height() * 0.85;   // current
-int16_t center_width = tft.height() * 0.5;    // SOC
+int16_t first_column = tft.height() * 0.2;   // wattage
+int16_t second_column = tft.height() * 0.74; // voltage, temperature
+int16_t third_column = tft.height() * 0.85;  // current
+int16_t center_width = tft.height() * 0.5;   // SOC
 // rows
-int16_t first_row = tft.width() * 0.18;     // voltage
-int16_t second_row = tft.width() * 0.82;    // temperature
-int16_t center_height = tft.width() * 0.5;  // SOC, current
+int16_t first_row = tft.width() * 0.18;    // voltage
+int16_t second_row = tft.width() * 0.82;   // temperature
+int16_t center_height = tft.width() * 0.5; // SOC, current
 
 //--------------------------------------------------------
 // Meter objects for page 1
@@ -300,8 +312,8 @@ Arc_Meter Voltage(second_column, first_row, radius2, "V", 15);
 Arc_Meter Current(third_column, center_height, radius2, "A", 100);
 Arc_Meter SOC(center_width, center_height, radius1, "%");
 Arc_Meter Temperature(second_column, second_row, radius2, "F",
-                      110);  // degree symbol: °C   idk if it works though so
-                             // test later -> it doesnt work - Marcos
+                      110); // degree symbol: °C   idk if it works though so
+                            // test later -> it doesnt work - Marcos
 
 // (x, y, w, h, thickness, units, direction, max_value)
 Rectangle_Meter Watts(8, 20, 82, tft.width() - 40, 4, "Watts", -1, 1200, 1);
@@ -315,9 +327,18 @@ Rectangle_Meter Cell2(84, 20, 72, tft.width() - 40, 4, "Cell2", -1, 4, 2);
 Rectangle_Meter Cell3(164, 20, 72, tft.width() - 40, 4, "Cell3", -1, 4, 2);
 Rectangle_Meter Cell4(244, 20, 72, tft.width() - 40, 4, "Cell4", -1, 4, 2);
 
-void DrawMainPage() {
+void DisplaySetup()
+{
+  tft.begin();
+
+  if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
+  {
+    Serial.println("Render initialize error");
+    return;
+  }
+
+  tft.setRotation(1);
   tft.fillScreen(Binghamton_Green);
-  // tft.setViewport(0, 0, 240, 320);
 
   // initialize meters
   Voltage.init();
@@ -327,148 +348,34 @@ void DrawMainPage() {
   Watts.init();
 }
 
-void DrawCellPage() {
-  tft.fillScreen(Binghamton_Green);
-
-  // initialize meters
-  Cell1.init();
-  Cell2.init();
-  Cell3.init();
-  Cell4.init();
-}
-
-void DisplaySetup() {
-  tft.begin();
-
-  if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT))) {
-    Serial.println("Render initialize error");
-    return;
-  }
-
-  tft.begin();
-  tft.setRotation(1);
-
-  // start with main page (page 1)
-  current_page = 0;
-  DrawMainPage();
-
-  // for aligning
-  // Draw a 3x2 grid (3 columns and 2 rows)
-  // DrawGrid(4, 3, TFT_LIGHTGREY);
-}
-
-void UpdateDisplay() {
-  if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT))) {
-    Serial.println("Render initialize error");
-    return;
-  }
-  double temp = 0;
-
-  if (current_page == 0) {
-    temp = GetValue("SOC");
-    if (abs(SOC.meterValue() - temp) > 0.5) {
-      SOC.update(temp);
-    }
-    temp = GetValue("Voltage");
-    if (abs(Voltage.meterValue() - temp) > 0.5) {
-      Voltage.update(temp);      
-    }
-    temp = GetValue("Current");
-    if (abs(Current.meterValue() - temp) > 0.5) {
-      Current.update(temp);      
-    }
-    temp = GetValue("Temperature");
-    if (abs(Temperature.meterValue() - temp) > 0.5) {
-      Temperature.update(temp);      
-    }
-    temp = GetValue("Watts");
-    if (abs(Watts.meterValue() - temp) > 0.5) {
-      Watts.update(temp);      
-    }
-  }
-  else if (current_page == 1) {
-    temp = GetValue("Cell1");
-    if (abs(Cell1.meterValue() - temp) > 0.5) {
-      Cell1.update(temp);      
-    }
-    temp = GetValue("Cell2");
-    if (abs(Cell2.meterValue() - temp) > 0.5) {
-      Cell2.update(temp);      
-    }
-    temp = GetValue("Cell3");
-    if (abs(Cell3.meterValue() - temp) > 0.5) {
-      Cell3.update(temp);      
-    }
-    temp = GetValue("Cell4");
-    if (abs(Cell4.meterValue() - temp) > 0.5) {
-      Cell4.update(temp);      
-    }
-  }
-
-  ofr.unloadFont();  // Recover space used by font metrics etc.
-}
-
-void SwitchPage()  // to be called from Display.ino when a swipe is detected
+void UpdateDisplay()
 {
-  current_page = (current_page == 0) ? 1 : 0;  // toggle between pages 1 and 2
-
-  if (current_page == 0) {
-    DrawMainPage();
-  } else if (current_page == 1) {
-    DrawCellPage();
-  }
-}
-
-void CheckTap() {
-  static bool touchActive = false;
-  static int16_t startX = 0, startY = 0;
-  static int16_t lastX = 0, lastY = 0;
-  static unsigned long startTime = 0;
-  uint16_t touchX, touchY;
-
-  // check if the screen is currently touched
-  if (tft.getTouch(&touchX, &touchY)) {
-    if (!touchActive) {
-      // new touch detected, record start position and time.
-      startX = touchX;
-      startY = touchY;
-      startTime = millis();
-      touchActive = true;
-    }
-    // update last known touch coords
-    lastX = touchX;
-    lastY = touchY;
-  } else {
-    // if touch was active and now released, determine if is tap
-    if (touchActive) {
-      unsigned long touchDuration = millis() - startTime;
-      int deltaX = abs(lastX - startX);
-      int deltaY = abs(lastY - startY);
-
-      // check if the touch qualifies as a tap
-      if (touchDuration < maxTapDuration && deltaX < tapMovementThreshold &&
-          deltaY < tapMovementThreshold) {
-        Serial.println("Tap detected, switching page");
-        SwitchPage();
-      }
-      touchActive = false;
-    }
-  }
-}
-
-void DrawGrid(int cols, int rows, uint16_t color) {
-  int colWidth = tft.width() / cols;    // Calculate width of each column
-  int rowHeight = tft.height() / rows;  // Calculate height of each row
-
-  // Draw vertical grid lines
-  for (int i = 1; i < cols; i++) {
-    int x = i * colWidth;
-    tft.drawLine(x, 0, x, tft.height(), color);
+  if (ofr.loadFont(TTF_FONT, sizeof(TTF_FONT)))
+  {
+    Serial.println("Render initialize error");
+    return;
   }
 
-  // Draw horizontal grid lines
-  for (int i = 1; i < rows; i++) {
-    int y = i * rowHeight;
-    tft.drawLine(0, y, tft.width(), y, color);
+  if (abs(SOC.meterValue() - GetValue("SOC")) > 0.1)
+  {
+    SOC.update(GetValue("SOC"));
   }
+  else if (abs(Voltage.meterValue() - GetValue("Voltage")) > 0.1)
+  {
+    Voltage.update(GetValue("Voltage"));
+  }
+  else if (abs(Current.meterValue() - GetValue("Current")) > 0.1)
+  {
+    Current.update(GetValue("Current"));
+  }
+  else if (abs(Temperature.meterValue() - GetValue("Temperature")) > 0.1)
+  {
+    Temperature.update(GetValue("Temperature"));
+  }
+  else if (abs(Watts.meterValue() - GetValue("Watts")) > 0.1)
+  {
+    Watts.update(GetValue("Watts"));
+  }
+
+  ofr.unloadFont(); // Recover space used by font metrics etc.
 }
