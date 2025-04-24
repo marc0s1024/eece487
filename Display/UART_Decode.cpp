@@ -64,7 +64,7 @@ double GetValue(String code)
   }
   else if (code == "Current")
   {
-    if (bms.get.packCurrent < Current.getMax() && abs(bms.get.packCurrent) < Current.getMax())
+    if (abs(bms.get.packCurrent) < Current.getMax())
     {
       return double(bms.get.packCurrent);
     }
@@ -78,8 +78,7 @@ double GetValue(String code)
     if (bms.get.tempAverage < Temperature.getMax() && bms.get.tempAverage > 0)
     {
       // convert Celsius to Fahrenheit
-      fahrenheitTempAvg =
-          (double(bms.get.tempAverage) * 1.8) + 32; // C to F conversion
+      fahrenheitTempAvg = (double(bms.get.tempAverage) * 1.8) + 32; // C to F conversion
       return fahrenheitTempAvg;
     }
     else
@@ -89,9 +88,8 @@ double GetValue(String code)
   }
   else if (code == "Watts")
   {
-    totalPower = double(bms.get.packVoltage) *
-                 double(bms.get.packCurrent); // calculate total power (P=VI)
-    if (totalPower < Watts.getMax() && abs(totalPower) < Watts.getMax())
+    totalPower = double(bms.get.packVoltage) * double(bms.get.packCurrent); // calculate total power (P=VI)
+    if (abs(totalPower) < Watts.getMax())
     {
       return totalPower;
     }
