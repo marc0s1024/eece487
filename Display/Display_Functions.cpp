@@ -356,23 +356,23 @@ void UpdateDisplay()
     return;
   }
 
-  if (abs(SOC.meterValue() - GetValue("SOC")) > 0.1)
+  if (abs(abs(SOC.meterValue()) - abs(GetValue("SOC"))) > 0.1)
   {
     SOC.update(GetValue("SOC"));
   }
-  else if (abs(Voltage.meterValue() - GetValue("Voltage")) > 0.1)
+  else if (abs(abs(Voltage.meterValue()) - abs(GetValue("Voltage"))) > 0.1)
   {
     Voltage.update(GetValue("Voltage"));
   }
-  else if (abs(Current.meterValue() - GetValue("Current")) > 0.1)
+  else if (abs(abs(Current.meterValue()) - abs(GetValue("Current"))) > 0.1)
   {
     Current.update(GetValue("Current"));
   }
-  else if (abs(Temperature.meterValue() - GetValue("Temperature")) > 0.1)
+  else if (abs(abs(Temperature.meterValue()) - abs(GetValue("Temperature"))) > 0.1)
   {
     Temperature.update(GetValue("Temperature"));
   }
-  else if (abs(Watts.meterValue() - GetValue("Watts")) > 0.1)
+  else if (abs(abs(Watts.meterValue()) - abs(GetValue("Watts"))) > 0.1)
   {
     Watts.update(GetValue("Watts"));
   }
